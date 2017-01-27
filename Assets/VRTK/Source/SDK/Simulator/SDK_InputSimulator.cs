@@ -143,6 +143,7 @@
         protected Transform leftHandVerticalAxisGuide;
         protected Transform rightHandHorizontalAxisGuide;
         protected Transform rightHandVerticalAxisGuide;
+        private static bool isFocused = false;
 
         #endregion
 
@@ -220,94 +221,103 @@
             destroyed = true;
         }
 
-        protected virtual void Update()
+        private void OnApplicationFocus(bool focus)
         {
-            if (Input.GetKeyDown(toggleControlHints))
-            {
-                showControlHints = !showControlHints;
-                hintCanvas.SetActive(showControlHints);
-            }
+            isFocused = focus;
+        }
 
-            if (Input.GetKeyDown(toggleMouseLock))
+        private void Update()
+        {
+            // only update if focused
+            if (isFocused)
             {
-                lockMouseToView = !lockMouseToView;
-            }
-
-            if (mouseMovementInput == MouseInputMode.RequiresButtonPress)
-            {
-                if (lockMouseToView)
+                if (Input.GetKeyDown(toggleControlHints))
                 {
-                    Cursor.lockState = Input.GetKey(mouseMovementKey) ? CursorLockMode.Locked : CursorLockMode.None;
+                    showControlHints = !showControlHints;
+                    hintCanvas.SetActive(showControlHints);
                 }
-                else if (Input.GetKeyDown(mouseMovementKey))
-                {
-                    oldPos = Input.mousePosition;
-                }
-            }
-            else
-            {
-                Cursor.lockState = lockMouseToView ? CursorLockMode.Locked : CursorLockMode.None;
-            }
 
-            if (Input.GetKeyDown(handsOnOff))
-            {
+                if (Input.GetKeyDown(toggleMouseLock))
+                {
+                    lockMouseToView = !lockMouseToView;
+                }
+
+                if (mouseMovementInput == MouseInputMode.RequiresButtonPress)
+                {
+                    if (lockMouseToView)
+                    {
+                        Cursor.lockState = Input.GetKey(mouseMovementKey) ? CursorLockMode.Locked : CursorLockMode.None;
+                    }
+                    else if (Input.GetKeyDown(mouseMovementKey))
+                    {
+                        oldPos = Input.mousePosition;
+                    }
+                }
+                else
+                {
+                    Cursor.lockState = lockMouseToView ? CursorLockMode.Locked : CursorLockMode.None;
+                }
+
+                if (Input.GetKeyDown(handsOnOff))
+                {
+                    if (isHand)
+                    {
+                        SetMove();
+                        ToggleGuidePlanes(false, false);
+                    }
+                    else
+                    {
+                        SetHand();
+                    }
+                }
+
+                if (Input.GetKeyDown(changeHands))
+                {
+                    if (currentHand.name == "LeftHand")
+                    {
+                        currentHand = rightHand;
+                        rightController.selected = true;
+                        leftController.selected = false;
+                    }
+                    else
+                    {
+                        currentHand = leftHand;
+                        rightController.selected = false;
+                        leftController.selected = true;
+                    }
+                }
+            
                 if (isHand)
                 {
-                    SetMove();
-                    ToggleGuidePlanes(false, false);
+                    UpdateHands();
                 }
                 else
                 {
-                    SetHand();
-                }
-            }
-
-            if (Input.GetKeyDown(changeHands))
-            {
-                if (currentHand.name == "LeftHand")
-                {
-                    currentHand = rightHand;
-                    rightController.selected = true;
-                    leftController.selected = false;
-                }
-                else
-                {
-                    currentHand = leftHand;
-                    rightController.selected = false;
-                    leftController.selected = true;
-                }
-            }
-
-            if (isHand)
-            {
-                UpdateHands();
-            }
-            else
-            {
-                UpdateRotation();
-                if (Input.GetKeyDown(distancePickupRight) && Input.GetKey(distancePickupModifier))
-                {
-                    TryPickup(true);
-                }
-                else if (Input.GetKeyDown(distancePickupLeft) && Input.GetKey(distancePickupModifier))
-                {
-                    TryPickup(false);
-                }
-                if (Input.GetKey(sprint))
-                {
-                    sprintMultiplier = playerSprintMultiplier;
-                }
-                else
-                {
-                    sprintMultiplier = 1;
-                }
-                if (Input.GetKeyDown(distancePickupModifier))
-                {
-                    crossHairPanel.SetActive(true);
-                }
-                else if (Input.GetKeyUp(distancePickupModifier))
-                {
-                    crossHairPanel.SetActive(false);
+                    UpdateRotation();
+                    if (Input.GetKeyDown(distancePickupRight) && Input.GetKey(distancePickupModifier))
+                    {
+                        TryPickup(true);
+                    }
+                    else if (Input.GetKeyDown(distancePickupLeft) && Input.GetKey(distancePickupModifier))
+                    {
+                        TryPickup(false);
+                    }
+                    if (Input.GetKey(sprint))
+                    {
+                        sprintMultiplier = playerSprintMultiplier;
+                    }
+                    else
+                    {
+                        sprintMultiplier = 1;
+                    }
+                    if (Input.GetKeyDown(distancePickupModifier))
+                    {
+                        crossHairPanel.SetActive(true);
+                    }
+                    else if (Input.GetKeyUp(distancePickupModifier))
+                    {
+                        crossHairPanel.SetActive(false);
+                    }
                 }
             }
 
