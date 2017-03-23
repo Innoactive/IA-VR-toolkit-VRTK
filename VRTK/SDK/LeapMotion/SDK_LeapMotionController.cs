@@ -28,6 +28,8 @@ namespace VRTK
         private PinchDetector rightPinchDetector;
         private Rigidbody leftHandRigidBody;
         private Rigidbody rightHandRigidBody;
+        private VelocityTracker leftHandVelocityTracker;
+        private VelocityTracker rightHandVelocityTracker;
 
         private IHandModel LeftHand
         {
@@ -113,6 +115,41 @@ namespace VRTK
                 return rightHandRigidBody;
             }
         }
+        private VelocityTracker LeftHandVelocityTracker
+        {
+            get
+            {
+                if (leftHandVelocityTracker == null)
+                {
+                    GameObject leftController = GetController(ControllerHand.Left, true);
+                    leftHandVelocityTracker = leftController.GetComponent<VelocityTracker>();
+                    if (leftHandVelocityTracker == null)
+                    {
+                        leftHandVelocityTracker = leftController.AddComponent<VelocityTracker>();
+                    }
+                }
+                return leftHandVelocityTracker;
+            }
+        }
+
+        private VelocityTracker RightHandVelocityTracker
+        {
+            get
+            {
+                if (rightHandVelocityTracker == null)
+                {
+                    GameObject rightController = GetController(ControllerHand.Right, true);
+                    rightHandVelocityTracker = rightController.GetComponent<VelocityTracker>();
+                    if (rightHandVelocityTracker == null)
+                    {
+                        rightHandVelocityTracker = rightController.AddComponent<VelocityTracker>();
+                    }
+                }
+                return rightHandVelocityTracker;
+            }
+        }
+
+        private Vector3 currentVelocity;
 
         private ControllerHand LeapChiralityToControllerHand(Chirality handedness)
         {
@@ -261,9 +298,22 @@ namespace VRTK
 
         public override Vector3 GetVelocityOnIndex(uint index)
         {
-            //FIXME Rigidbody velocity is always 0
-            Rigidbody rB = GetRigidBodByIndex(index);
-            return rB.velocity;
+            ControllerHand handedness = indexToControllerHand(index);
+            VelocityTracker vT;
+            switch (handedness)
+            {
+                case ControllerHand.Left:
+                    vT = LeftHandVelocityTracker;
+                    break;
+                case ControllerHand.Right:
+                    vT = RightHandVelocityTracker;
+                    break;
+                default:
+                    return Vector3.zero;
+            }
+            // rotate velocity vector to hand rotation
+            Vector3 velocity = (Quaternion.identity * Quaternion.Inverse(vT.transform.rotation)) * vT.Velocity;
+            return velocity;
         }
 
         public override Vector3 GetAngularVelocityOnIndex(uint index)
@@ -310,7 +360,6 @@ namespace VRTK
 
         public override void ProcessUpdate(uint index, Dictionary<string, object> options)
         {
-            //TODO
         }
         
         #region Not Applicable
