@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace VRTK
 {
-    public class SmoothedVector3 : MonoBehaviour
+    public class SmoothedVector3
     {
         private int maxSampleCount;
 
