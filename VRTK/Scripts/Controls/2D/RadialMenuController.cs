@@ -1,20 +1,19 @@
-namespace VRTK
+﻿namespace VRTK
 {
     using UnityEngine;
 
     // Radial Menu input from Vive Controller
-    [RequireComponent(typeof(RadialMenu))]
     public class RadialMenuController : MonoBehaviour
     {
         public VRTK_ControllerEvents events;
 
-        protected RadialMenu menu;
+        protected IRadialMenu menu;
         private float currentAngle; //Keep track of angle for when we click
         private bool touchpadTouched;
 
         protected virtual void Awake()
         {
-            menu = GetComponent<RadialMenu>();
+            menu = GetComponent<IRadialMenu>();
 
             Initialize();
         }

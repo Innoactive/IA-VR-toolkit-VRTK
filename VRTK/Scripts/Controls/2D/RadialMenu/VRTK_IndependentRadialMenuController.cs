@@ -129,7 +129,7 @@ namespace VRTK
                 transform.rotation = startingRot;
             }
 
-            if (!menu.isShown)
+            if (!menu.IsShown)
             {
                 transform.localScale = Vector3.zero;
             }
@@ -173,7 +173,7 @@ namespace VRTK
             DoClickButton(sender);
             isClicked = true;
 
-            if (hideAfterExecution && !menu.executeOnUnclick)
+            if (hideAfterExecution && !menu.ExecuteOnUnclick)
             {
                 ImmediatelyHideMenu(e);
             }
@@ -184,7 +184,7 @@ namespace VRTK
             DoUnClickButton(sender);
             isClicked = false;
 
-            if ((hideAfterExecution || (collidingObjects.Count == 0 && menu.hideOnRelease)) && menu.executeOnUnclick)
+            if ((hideAfterExecution || (collidingObjects.Count == 0 && menu.HideOnRelease)) && menu.ExecuteOnUnclick)
             {
                 ImmediatelyHideMenu(e);
             }
@@ -209,7 +209,7 @@ namespace VRTK
         protected virtual void ObjectUntouched(object sender, InteractableObjectEventArgs e)
         {
             collidingObjects.Remove(e.interactingObject);
-            if (((!menu.executeOnUnclick || !isClicked) && menu.hideOnRelease) || (Object)sender == this)
+            if (((!menu.ExecuteOnUnclick || !isClicked) && menu.HideOnRelease) || (Object)sender == this)
             {
                 DoHideMenu(hideAfterExecution, sender);
 
@@ -349,7 +349,7 @@ namespace VRTK
                 }
             }
 
-            if (menu.isShown)
+            if (menu.IsShown)
             {
                 if (interactingObjects.Count > 0) // There's not really an event for the controller moving, so just update the position every frame
                 {
