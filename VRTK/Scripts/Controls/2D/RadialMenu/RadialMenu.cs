@@ -28,7 +28,7 @@ namespace VRTK
         [Tooltip("MenuContentProvider implementation, which serves us a list of buttons.")]
         public IMenuContentProvider menuContentProvider;
 
-        public List<RadialMenuButton> Buttons
+        public List<MenuButton> Buttons
         {
             get { return menuContentProvider.Buttons; }
             set { menuContentProvider.Buttons = value; }
@@ -248,7 +248,7 @@ namespace VRTK
             }
         }
 
-        public RadialMenuButton GetButton(int id)
+        public MenuButton GetButton(int id)
         {
             if (id < Buttons.Count)
             {
@@ -372,7 +372,7 @@ namespace VRTK
             }
         }
 
-        public void AddButton(RadialMenuButton newButton)
+        public void AddButton(MenuButton newButton)
         {
             Buttons.Add(newButton);
             RegenerateButtons();
@@ -401,16 +401,6 @@ namespace VRTK
         }
 
         #endregion
-    }
-
-    [System.Serializable]
-    public class RadialMenuButton
-    {
-        public Sprite ButtonIcon;
-        public UnityEvent OnClick = new UnityEvent();
-        public UnityEvent OnHold = new UnityEvent();
-        public UnityEvent OnHoverEnter = new UnityEvent();
-        public UnityEvent OnHoverExit = new UnityEvent();
     }
 
     public enum ButtonEvent

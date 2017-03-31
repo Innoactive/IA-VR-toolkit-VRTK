@@ -4,6 +4,6 @@ namespace VRTK
 {
     public interface IMenuContentProvider
     {
-        List<RadialMenuButton> Buttons { get; set; }
+        List<MenuButton> Buttons { get; set; }
     }
 }

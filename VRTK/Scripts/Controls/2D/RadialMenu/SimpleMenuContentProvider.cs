@@ -6,8 +6,8 @@ namespace VRTK
     [Serializable]
     public class SimpleMenuContentProvider : IMenuContentProvider
     {
-        public List<RadialMenuButton> buttons;
+        public List<MenuButton> buttons;
 
-        public List<RadialMenuButton> Buttons { get { return buttons; } set { buttons = value; } }
+        public List<MenuButton> Buttons { get { return buttons; } set { buttons = value; } }
     }
 }

@@ -5,6 +5,6 @@ namespace VRTK
 {
     public class ContextMenuContentProvider : IMenuContentProvider
     {
-        public List<RadialMenuButton> Buttons { get; set; }
+        public List<MenuButton> Buttons { get; set; }
     }
 }
