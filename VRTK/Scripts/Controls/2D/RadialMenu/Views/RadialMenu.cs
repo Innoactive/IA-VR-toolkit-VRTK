@@ -133,7 +133,7 @@ namespace VRTK
             //Keep track of pressed button and constantly invoke Hold event
             if (currentPress != -1)
             {
-                Buttons[currentPress].OnHold.Invoke();
+                Buttons[currentPress].onHold.Invoke();
             }
         }
 
@@ -156,7 +156,7 @@ namespace VRTK
             {
                 ExecuteEvents.Execute(menuButtons[currentHover], pointer, ExecuteEvents.pointerUpHandler);
                 ExecuteEvents.Execute(menuButtons[currentHover], pointer, ExecuteEvents.pointerExitHandler);
-                Buttons[currentHover].OnHoverExit.Invoke();
+                Buttons[currentHover].onHoverExit.Invoke();
                 if (ExecuteOnUnclick && currentPress != -1)
                 {
                     ExecuteEvents.Execute(menuButtons[buttonID], pointer, ExecuteEvents.pointerDownHandler);
@@ -169,7 +169,7 @@ namespace VRTK
                 currentPress = buttonID;
                 if (!ExecuteOnUnclick)
                 {
-                    Buttons[buttonID].OnClick.Invoke();
+                    Buttons[buttonID].onClick.Invoke();
                     AttempHapticPulse(baseHapticStrength * 2.5f);
                 }
             }
@@ -181,13 +181,13 @@ namespace VRTK
                 if (ExecuteOnUnclick)
                 {
                     AttempHapticPulse(baseHapticStrength * 2.5f);
-                    Buttons[buttonID].OnClick.Invoke();
+                    Buttons[buttonID].onClick.Invoke();
                 }
             }
             else if (evt == ButtonEvent.hoverOn && currentHover != buttonID) // Show hover UI event (darken button etc). Show menu
             {
                 ExecuteEvents.Execute(menuButtons[buttonID], pointer, ExecuteEvents.pointerEnterHandler);
-                Buttons[buttonID].OnHoverEnter.Invoke();
+                Buttons[buttonID].onHoverEnter.Invoke();
                 AttempHapticPulse(baseHapticStrength);
             }
             currentHover = buttonID; //Set current hover ID, need this to un-hover if selected button changes
@@ -230,7 +230,7 @@ namespace VRTK
             {
                 var pointer = new PointerEventData(EventSystem.current);
                 ExecuteEvents.Execute(menuButtons[currentHover], pointer, ExecuteEvents.pointerExitHandler);
-                Buttons[currentHover].OnHoverExit.Invoke();
+                Buttons[currentHover].onHoverExit.Invoke();
                 currentHover = -1;
             }
         }
@@ -341,13 +341,13 @@ namespace VRTK
 
                 //Place and populate Button Icon
                 GameObject buttonIcon = newButton.GetComponentInChildren<RadialButtonIcon>().gameObject;
-                if (Buttons[i].ButtonIcon == null)
+                if (Buttons[i].buttonIcon == null)
                 {
                     buttonIcon.SetActive(false);
                 }
                 else
                 {
-                    buttonIcon.GetComponent<Image>().sprite = Buttons[i].ButtonIcon;
+                    buttonIcon.GetComponent<Image>().sprite = Buttons[i].buttonIcon;
                     buttonIcon.transform.localPosition = new Vector2(-1 * ((newButton.GetComponent<RectTransform>().rect.width / 2f) - (circle.thickness / 2f)), 0);
                     //Min icon size from thickness and arc
                     float scale1 = Mathf.Abs(circle.thickness);
