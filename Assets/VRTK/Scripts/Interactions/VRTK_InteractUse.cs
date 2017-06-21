@@ -190,7 +190,10 @@ namespace VRTK
                 VRTK_InteractableObject touchedObjectScript = e.target.GetComponent<VRTK_InteractableObject>();
                 if (touchedObjectScript != null && touchedObjectScript.useOverrideButton != VRTK_ControllerEvents.ButtonAlias.Undefined)
                 {
-                    savedUseButton = subscribedUseButton;
+                    if (savedUseButton == VRTK_ControllerEvents.ButtonAlias.Undefined)
+                    {
+                        savedUseButton = useButton;
+                    }
                     useButton = touchedObjectScript.useOverrideButton;
                 }
             }
