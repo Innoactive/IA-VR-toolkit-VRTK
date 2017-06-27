@@ -21,6 +21,7 @@
 
         private Coroutine enableControllerCoroutine = null;
         private GameObject aliasController;
+        private bool allowDisableToPerform = false;
 
         public virtual void OnControllerEnabled(VRTKTrackedControllerEventArgs e)
         {
@@ -62,6 +63,9 @@
                 aliasController = gameObject;
             }
 
+            // unset allowDisableToPerform to avoid a pending invoked "Disable" to un-do our enable step
+            allowDisableToPerform = false;
+
             if (enableControllerCoroutine != null)
             {
                 StopCoroutine(enableControllerCoroutine);
@@ -71,11 +75,18 @@
 
         protected virtual void OnDisable()
         {
+            allowDisableToPerform = true;
             Invoke("Disable", 0f);
         }
 
         protected virtual void Disable()
         {
+            if (!allowDisableToPerform)
+            {
+                return;
+            }
+            allowDisableToPerform = false;
+
             if (enableControllerCoroutine != null)
             {
                 StopCoroutine(enableControllerCoroutine);
@@ -117,6 +128,7 @@
             }
 
             index = VRTK_DeviceFinder.GetControllerIndex(gameObject);
+
             OnControllerEnabled(SetEventPayload());
         }
     }
