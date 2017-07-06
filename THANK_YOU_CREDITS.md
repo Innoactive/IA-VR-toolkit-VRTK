@@ -2,11 +2,18 @@
 
 A big thank you to the supporters of VRTK via the VRTK Patreon page at https://www.patreon.com/vrtk
 
- * **Luke Chadwick** *[Professional Sponsor]*
+### Professional Sponsors
+
+[![image](https://user-images.githubusercontent.com/1029673/27898738-28f0e226-621f-11e7-9fdb-8618d85ba372.png)](https://www.realestate.com.au) 
+
+### Name List
+
+ * **realestate.co.au - Luke Chadwick** *[Professional Sponsor]*
  * Mark Bradley
  * TreeFortress Games
  * BinaryLegend 
  * Eric 
+ * Tuukka Takala
  * Mcdoogleh 
  * Matt Ostgard
  * cognitiveVR 
@@ -23,6 +30,7 @@ A big thank you to the supporters of VRTK via the VRTK Patreon page at https://w
  * Jonathan Linowes
  * jamie hurt
  * Tim Lobes
+ * Chris Tuminello
  * Thomas Kildren
  * Devon Grandahl
  * Victor Lew
@@ -30,9 +38,9 @@ A big thank you to the supporters of VRTK via the VRTK Patreon page at https://w
  * Eric Vander Wal
  * Francis Sutton
  * Grayson Deitering
+ * mori 
  * TigerLily 
  * Roland 
- * Hgulgen 
  * Michal VRoblewski
  * Chris Kirby
  * Trevor Gibbons
@@ -53,14 +61,11 @@ A big thank you to the supporters of VRTK via the VRTK Patreon page at https://w
  * Stephen Elkins
  * David 
  * Matthew Boynton
- * Jason Halbach
  * Bartek Tułodziecki
  * Kyle Mausser
  * Niklas Dennerståhl
  * Luke Pierson
  * Balazs Faludi
- * Tuukka Takala
  * Will Lingard
  * Joe Ferguson
- * Matthew Reis
  * Adam Tannir
