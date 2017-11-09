@@ -13,6 +13,7 @@ using System.Linq;
 
 namespace Supyrb
 {
+#if UNITYEDITOR
     using System;
     using UnityEngine;
     using UnityEditor;
@@ -184,4 +185,5 @@ namespace Supyrb
             return allTypes;
         }
     }
+#endif
 }
