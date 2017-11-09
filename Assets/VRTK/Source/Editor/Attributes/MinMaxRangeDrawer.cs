@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿#if UNITYEDITOR
+using UnityEngine;
 using UnityEditor;
 using System.Globalization;
 using Supyrb;
@@ -76,3 +77,4 @@ class MinMaxRangeDrawer : PropertyDrawer
         EditorGUI.LabelField(position, label, new GUIContent("Use only with Vector2 or Limits2D"));
     }
 }
+#endif
