@@ -2,7 +2,6 @@
 namespace VRTK
 {
     using UnityEngine;
-    using System;
     using System.Collections;
     using System.Collections.Generic;
     using Highlighters;
@@ -80,13 +79,12 @@ namespace VRTK
         [Tooltip("If this is checked then the drop zone highlight section will be displayed in the scene editor window.")]
         public bool displayDropZoneInEditor = true;
 
-        [Tooltip("The GameObject to snap into the dropzone when the drop zone is enabled. The Interactable Object must be valid in any given policy list to snap.")]
-        [Obsolete("`VRTK_SnapDropZone.defaultSnappedObject` has been replaced with the `VRTK_SnapDropZone.defaultSnappedInteractableObject`. This parameter will be removed in a future version of VRTK.")]
-        [HideInInspector]
-        public GameObject defaultSnappedObject;
-
         [Tooltip("The Interactable Object to snap into the dropzone when the drop zone is enabled. The Interactable Object must be valid in any given policy list to snap.")]
         public VRTK_InteractableObject defaultSnappedInteractableObject;
+
+        [System.Obsolete("`VRTK_SnapDropZone.defaultSnappedObject` has been replaced with the `VRTK_SnapDropZone.defaultSnappedInteractableObject`. This parameter will be removed in a future version of VRTK.")]
+        [ObsoleteInspector]
+        public GameObject defaultSnappedObject;
 
         /// <summary>
         /// Emitted when a valid interactable object enters the snap drop zone trigger collider.
@@ -284,7 +282,7 @@ namespace VRTK
             List<GameObject> returnList = new List<GameObject>();
             for (int i = 0; i < currentValidSnapInteractableObjects.Count; i++)
             {
-                returnList.Add(currentValidSnapInteractableObjects[i].gameObject);
+                VRTK_SharedMethods.AddListValue(returnList, currentValidSnapInteractableObjects[i].gameObject);
             }
             return returnList;
         }
@@ -401,10 +399,10 @@ namespace VRTK
 
         protected virtual void CheckCanSnap(VRTK_InteractableObject interactableObjectCheck)
         {
-            if (interactableObjectCheck != null)
+            if (interactableObjectCheck != null && ValidSnapObject(interactableObjectCheck, true))
             {
                 AddCurrentValidSnapObject(interactableObjectCheck);
-                if (!isSnapped && ValidSnapObject(interactableObjectCheck, true))
+                if (!isSnapped)
                 {
                     ToggleHighlight(interactableObjectCheck, true);
                     interactableObjectCheck.SetSnapDropZoneHover(this, true);
@@ -847,11 +845,10 @@ namespace VRTK
         {
             if (givenObject != null)
             {
-                if (!currentValidSnapInteractableObjects.Contains(givenObject))
+                if (VRTK_SharedMethods.AddListValue(currentValidSnapInteractableObjects, givenObject, true))
                 {
                     givenObject.InteractableObjectGrabbed += InteractableObjectGrabbed;
                     givenObject.InteractableObjectUngrabbed += InteractableObjectUngrabbed;
-                    currentValidSnapInteractableObjects.Add(givenObject);
                 }
             }
         }
@@ -860,11 +857,10 @@ namespace VRTK
         {
             if (givenObject != null)
             {
-                if (currentValidSnapInteractableObjects.Contains(givenObject))
+                if (currentValidSnapInteractableObjects.Remove(givenObject))
                 {
                     givenObject.InteractableObjectGrabbed -= InteractableObjectGrabbed;
                     givenObject.InteractableObjectUngrabbed -= InteractableObjectUngrabbed;
-                    currentValidSnapInteractableObjects.Remove(givenObject);
                 }
             }
         }

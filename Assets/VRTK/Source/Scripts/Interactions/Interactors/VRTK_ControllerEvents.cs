@@ -10,12 +10,16 @@ namespace VRTK
     /// <param name="buttonPressure">The amount of pressure being applied to the button pressed. `0f` to `1f`.</param>
     /// <param name="touchpadAxis">The position the touchpad is touched at. `(0,0)` to `(1,1)`.</param>
     /// <param name="touchpadAngle">The rotational position the touchpad is being touched at, 0 being top, 180 being bottom and all other angles accordingly. `0f` to `360f`.</param>
+    /// <param name="touchpadTwoAxis">The position the touchpad two is touched at. `(0,0)` to `(1,1)`.</param>
+    /// <param name="touchpadTwoAngle">The rotational position the touchpad two is being touched at, 0 being top, 180 being bottom and all other angles accordingly. `0f` to `360f`.</param>
     public struct ControllerInteractionEventArgs
     {
         public VRTK_ControllerReference controllerReference;
         public float buttonPressure;
         public Vector2 touchpadAxis;
         public float touchpadAngle;
+        public Vector2 touchpadTwoAxis;
+        public float touchpadTwoAngle;
     }
 
     /// <summary>
@@ -87,6 +91,10 @@ namespace VRTK
             /// The touchpad is pressed (to the point of hearing a click).
             /// </summary>
             TouchpadPress,
+            /// <summary>
+            /// The touchpad two is touched (without pressing down to click).
+            /// </summary>
+            TouchpadTwoTouch,
             /// <summary>
             /// The button one is touched.
             /// </summary>
@@ -252,7 +260,7 @@ namespace VRTK
         [HideInInspector]
         public bool touchpadTouched = false;
         /// <summary>
-        /// This will be true if the touchpad touch position has changed.
+        /// This will be true if the touchpad position has changed.
         /// </summary>
         [HideInInspector]
         public bool touchpadAxisChanged = false;
@@ -261,6 +269,15 @@ namespace VRTK
         /// </summary>
         [HideInInspector]
         public bool touchpadSenseAxisChanged = false;
+        /// <summary>
+        /// This will be true if the touchpad two is being touched.
+        /// </summary>
+        [HideInInspector]
+        public bool touchpadTwoTouched = false;
+        /// This will be true if the touchpad two position has changed.
+        /// </summary>
+        [HideInInspector]
+        public bool touchpadTwoAxisChanged = false;
         #endregion touchpad bool states
 
         #region button one bool states
@@ -444,6 +461,20 @@ namespace VRTK
         /// Emitted when the amount of touch on the touchpad sense changes.
         /// </summary>
         public event ControllerInteractionEventHandler TouchpadSenseAxisChanged;
+
+        /// <summary>
+        /// Emitted when the touchpad two is touched (without pressing down to click).
+        /// </summary>
+        public event ControllerInteractionEventHandler TouchpadTwoTouchStart;
+        /// <summary>
+        /// Emitted when the touchpad two is no longer being touched.
+        /// </summary>
+        public event ControllerInteractionEventHandler TouchpadTwoTouchEnd;
+
+        /// <summary>
+        /// Emitted when the touchpad two is being touched in a different location.
+        /// </summary>
+        public event ControllerInteractionEventHandler TouchpadTwoAxisChanged;
         #endregion controller touchpad events
 
         #region controller button one events
@@ -543,6 +574,7 @@ namespace VRTK
         #endregion controller events
 
         protected Vector2 touchpadAxis = Vector2.zero;
+        protected Vector2 touchpadTwoAxis = Vector2.zero;
         protected Vector2 triggerAxis = Vector2.zero;
         protected Vector2 gripAxis = Vector2.zero;
         protected float touchpadSenseAxis = 0f;
@@ -760,6 +792,30 @@ namespace VRTK
                 TouchpadSenseAxisChanged(this, e);
             }
         }
+
+        public virtual void OnTouchpadTwoTouchStart(ControllerInteractionEventArgs e)
+        {
+            if (TouchpadTwoTouchStart != null)
+            {
+                TouchpadTwoTouchStart(this, e);
+            }
+        }
+
+        public virtual void OnTouchpadTwoTouchEnd(ControllerInteractionEventArgs e)
+        {
+            if (TouchpadTwoTouchEnd != null)
+            {
+                TouchpadTwoTouchEnd(this, e);
+            }
+        }
+
+        public virtual void OnTouchpadTwoAxisChanged(ControllerInteractionEventArgs e)
+        {
+            if (TouchpadTwoAxisChanged != null)
+            {
+                TouchpadTwoAxisChanged(this, e);
+            }
+        }
         #endregion event touchpad methods
 
         #region event button one methods
@@ -953,7 +1009,9 @@ namespace VRTK
             e.controllerReference = controllerReference;
             e.buttonPressure = buttonPressure;
             e.touchpadAxis = VRTK_SDK_Bridge.GetControllerAxis(SDK_BaseController.ButtonTypes.Touchpad, controllerReference);
-            e.touchpadAngle = CalculateTouchpadAxisAngle(e.touchpadAxis);
+            e.touchpadAngle = CalculateVector2AxisAngle(e.touchpadAxis);
+            e.touchpadTwoAxis = VRTK_SDK_Bridge.GetControllerAxis(SDK_BaseController.ButtonTypes.TouchpadTwo, controllerReference);
+            e.touchpadTwoAngle = CalculateVector2AxisAngle(e.touchpadTwoAxis);
             return e;
         }
 
@@ -968,6 +1026,23 @@ namespace VRTK
 
         #region axis getters
         /// <summary>
+        /// The GetAxis method returns the coordinates of where the given axis type is being touched.
+        /// </summary>
+        /// <param name="vector2AxisType">The Vector2AxisType to check the touch position of.</param>
+        /// <returns>A two dimensional vector containing the `x` and `y` position of where the given axis type is being touched. `(0,0)` to `(1,1)`.</returns>
+        public virtual Vector2 GetAxis(SDK_BaseController.Vector2Axis vector2AxisType)
+        {
+            switch (vector2AxisType)
+            {
+                case SDK_BaseController.Vector2Axis.Touchpad:
+                    return GetTouchpadAxis();
+                case SDK_BaseController.Vector2Axis.TouchpadTwo:
+                    return GetTouchpadTwoAxis();
+            }
+            return Vector2.zero;
+        }
+
+        /// <summary>
         /// The GetTouchpadAxis method returns the coordinates of where the touchpad is being touched and can be used for directional input via the touchpad. The `x` value is the horizontal touch plane and the `y` value is the vertical touch plane.
         /// </summary>
         /// <returns>A two dimensional vector containing the `x` and `y` position of where the touchpad is being touched. `(0,0)` to `(1,1)`.</returns>
@@ -977,12 +1052,47 @@ namespace VRTK
         }
 
         /// <summary>
+        /// The GetTouchpadTwoAxis method returns the coordinates of where the touchpad two is being touched and can be used for directional input via the touchpad two. The `x` value is the horizontal touch plane and the `y` value is the vertical touch plane.
+        /// </summary>
+        /// <returns>A two dimensional vector containing the `x` and `y` position of where the touchpad two is being touched. `(0,0)` to `(1,1)`.</returns>
+        public virtual Vector2 GetTouchpadTwoAxis()
+        {
+            return touchpadTwoAxis;
+        }
+
+        /// <summary>
+        /// The GetAxisAngle method returns the angle of where the given axis type is currently being touched with the top of the given axis type being `0` degrees and the bottom of the given axis type being `180` degrees.
+        /// </summary>
+        /// <param name="vector2AxisType">The Vector2AxisType to get the touch angle for.</param>
+        /// <returns>A float representing the angle of where the given axis type is being touched. `0f` to `360f`.</returns>
+        public virtual float GetAxisAngle(SDK_BaseController.Vector2Axis vector2AxisType)
+        {
+            switch (vector2AxisType)
+            {
+                case SDK_BaseController.Vector2Axis.Touchpad:
+                    return GetTouchpadAxisAngle();
+                case SDK_BaseController.Vector2Axis.TouchpadTwo:
+                    return GetTouchpadTwoAxisAngle();
+            }
+            return 0f;
+        }
+
+        /// <summary>
         /// The GetTouchpadAxisAngle method returns the angle of where the touchpad is currently being touched with the top of the touchpad being `0` degrees and the bottom of the touchpad being `180` degrees.
         /// </summary>
         /// <returns>A float representing the angle of where the touchpad is being touched. `0f` to `360f`.</returns>
         public virtual float GetTouchpadAxisAngle()
         {
-            return CalculateTouchpadAxisAngle(touchpadAxis);
+            return CalculateVector2AxisAngle(touchpadAxis);
+        }
+
+        /// <summary>
+        /// The GetTouchpadTwoAxisAngle method returns the angle of where the touchpad two is currently being touched with the top of the touchpad two being `0` degrees and the bottom of the touchpad two being `180` degrees.
+        /// </summary>
+        /// <returns>A float representing the angle of where the touchpad two is being touched. `0f` to `360f`.</returns>
+        public virtual float GetTouchpadTwoAxisAngle()
+        {
+            return CalculateVector2AxisAngle(touchpadTwoAxis);
         }
 
         /// <summary>
@@ -1082,6 +1192,28 @@ namespace VRTK
         }
 
         /// <summary>
+        /// The GetAxisState method takes a given Vector2Axis and returns a boolean whether that given axis is currently being touched or pressed.
+        /// </summary>
+        /// <param name="axis">The axis to check on.</param>
+        /// <param name="pressType">The button press type to check for.</param>
+        /// <returns>Returns `true` if the axis is being interacted with via the given press type.</returns>
+        public virtual bool GetAxisState(SDK_BaseController.Vector2Axis axis, SDK_BaseController.ButtonPressTypes pressType)
+        {
+            switch (pressType)
+            {
+                case SDK_BaseController.ButtonPressTypes.Press:
+                case SDK_BaseController.ButtonPressTypes.PressDown:
+                case SDK_BaseController.ButtonPressTypes.PressUp:
+                    return (axis == SDK_BaseController.Vector2Axis.Touchpad ? touchpadPressed : false);
+                case SDK_BaseController.ButtonPressTypes.Touch:
+                case SDK_BaseController.ButtonPressTypes.TouchDown:
+                case SDK_BaseController.ButtonPressTypes.TouchUp:
+                    return (axis == SDK_BaseController.Vector2Axis.Touchpad ? touchpadTouched : touchpadTwoTouched);
+            }
+            return false;
+        }
+
+        /// <summary>
         /// The IsButtonPressed method takes a given button alias and returns a boolean whether that given button is currently being pressed or not.
         /// </summary>
         /// <param name="button">The button to check if it's being pressed.</param>
@@ -1112,6 +1244,8 @@ namespace VRTK
                     return touchpadTouched;
                 case ButtonAlias.TouchpadPress:
                     return touchpadPressed;
+                case ButtonAlias.TouchpadTwoTouch:
+                    return touchpadTwoTouched;
                 case ButtonAlias.TouchpadSense:
                     return (touchpadSenseAxis >= senseAxisPressThreshold);
                 case ButtonAlias.ButtonOnePress:
@@ -1226,6 +1360,7 @@ namespace VRTK
             CheckTriggerEvents(controllerReference);
             CheckGripEvents(controllerReference);
             CheckTouchpadEvents(controllerReference);
+            CheckTouchpadTwoEvents(controllerReference);
             CheckButtonOneEvents(controllerReference);
             CheckButtonTwoEvents(controllerReference);
             CheckStartMenuEvents(controllerReference);
@@ -1430,6 +1565,36 @@ namespace VRTK
 
             touchpadAxis = (touchpadAxisChanged ? new Vector2(currentTouchpadAxis.x, currentTouchpadAxis.y) : touchpadAxis);
             touchpadSenseAxis = (touchpadSenseAxisChanged ? currentTouchpadSenseAxis : touchpadSenseAxis);
+        }
+
+        protected virtual void CheckTouchpadTwoEvents(VRTK_ControllerReference controllerReference)
+        {
+            Vector2 currentTouchpadTwoAxis = VRTK_SDK_Bridge.GetControllerAxis(SDK_BaseController.ButtonTypes.TouchpadTwo, controllerReference);
+
+            //Touchpad Two Touched
+            if (VRTK_SDK_Bridge.GetControllerButtonState(SDK_BaseController.ButtonTypes.TouchpadTwo, SDK_BaseController.ButtonPressTypes.TouchDown, controllerReference))
+            {
+                OnTouchpadTwoTouchStart(SetControllerEvent(ref touchpadTwoTouched, true, 1f));
+            }
+
+            //Touchpad Two Untouched
+            if (VRTK_SDK_Bridge.GetControllerButtonState(SDK_BaseController.ButtonTypes.TouchpadTwo, SDK_BaseController.ButtonPressTypes.TouchUp, controllerReference))
+            {
+                OnTouchpadTwoTouchEnd(SetControllerEvent(ref touchpadTwoTouched, false, 0f));
+                touchpadTwoAxis = Vector2.zero;
+            }
+
+            //Touchpad Two Axis
+            if (VRTK_SDK_Bridge.IsTouchpadStatic(true, touchpadTwoAxis, currentTouchpadTwoAxis, axisFidelity))
+            {
+                touchpadTwoAxisChanged = false;
+            }
+            else
+            {
+                OnTouchpadTwoAxisChanged(SetControllerEvent(ref touchpadTwoAxisChanged, true, 1f));
+            }
+
+            touchpadTwoAxis = (touchpadTwoAxisChanged ? new Vector2(currentTouchpadTwoAxis.x, currentTouchpadTwoAxis.y) : touchpadTwoAxis);
         }
 
         protected virtual void CheckButtonOneEvents(VRTK_ControllerReference controllerReference)
@@ -1780,6 +1945,30 @@ namespace VRTK
                         }
                     }
                     break;
+                case ButtonAlias.TouchpadTwoTouch:
+                    if (subscribe)
+                    {
+                        if (startEvent)
+                        {
+                            TouchpadTwoTouchStart += callbackMethod;
+                        }
+                        else
+                        {
+                            TouchpadTwoTouchEnd += callbackMethod;
+                        }
+                    }
+                    else
+                    {
+                        if (startEvent)
+                        {
+                            TouchpadTwoTouchStart -= callbackMethod;
+                        }
+                        else
+                        {
+                            TouchpadTwoTouchEnd -= callbackMethod;
+                        }
+                    }
+                    break;
                 case ButtonAlias.ButtonOnePress:
                     if (subscribe)
                     {
@@ -1972,6 +2161,16 @@ namespace VRTK
                             break;
                     }
                     break;
+                case SDK_BaseController.ButtonTypes.TouchpadTwo:
+                    if (subscribe)
+                    {
+                        TouchpadTwoAxisChanged += callbackMethod;
+                    }
+                    else
+                    {
+                        TouchpadTwoAxisChanged -= callbackMethod;
+                    }
+                    break;
                 case SDK_BaseController.ButtonTypes.MiddleFinger:
                     switch (axisType)
                     {
@@ -2041,7 +2240,7 @@ namespace VRTK
             OnControllerModelAvailable(SetControllerEvent());
         }
 
-        protected virtual float CalculateTouchpadAxisAngle(Vector2 axis)
+        protected virtual float CalculateVector2AxisAngle(Vector2 axis)
         {
             float angle = Mathf.Atan2(axis.y, axis.x) * Mathf.Rad2Deg;
             angle = 90.0f - angle;
@@ -2116,6 +2315,11 @@ namespace VRTK
                 OnTouchpadTouchEnd(SetControllerEvent(ref touchpadTouched, false, 0f));
             }
 
+            if (touchpadTwoTouched)
+            {
+                OnTouchpadTwoTouchEnd(SetControllerEvent(ref touchpadTwoTouched, false, 0f));
+            }
+
             if (buttonOnePressed)
             {
                 OnButtonOneReleased(SetControllerEvent(ref buttonOnePressed, false, 0f));
@@ -2144,6 +2348,7 @@ namespace VRTK
             triggerAxisChanged = false;
             gripAxisChanged = false;
             touchpadAxisChanged = false;
+            touchpadTwoAxisChanged = false;
             triggerSenseAxisChanged = false;
             touchpadSenseAxisChanged = false;
             middleFingerSenseAxisChanged = false;
@@ -2157,9 +2362,11 @@ namespace VRTK
                 Vector2 currentTriggerAxis = VRTK_SDK_Bridge.GetControllerAxis(SDK_BaseController.ButtonTypes.Trigger, controllerReference);
                 Vector2 currentGripAxis = VRTK_SDK_Bridge.GetControllerAxis(SDK_BaseController.ButtonTypes.Grip, controllerReference);
                 Vector2 currentTouchpadAxis = VRTK_SDK_Bridge.GetControllerAxis(SDK_BaseController.ButtonTypes.Touchpad, controllerReference);
+                Vector2 currentTouchpadTwoAxis = VRTK_SDK_Bridge.GetControllerAxis(SDK_BaseController.ButtonTypes.TouchpadTwo, controllerReference);
 
                 // Save current touch and trigger settings to detect next change.
                 touchpadAxis = new Vector2(currentTouchpadAxis.x, currentTouchpadAxis.y);
+                touchpadTwoAxis = new Vector2(currentTouchpadTwoAxis.x, currentTouchpadTwoAxis.y);
                 triggerAxis = new Vector2(currentTriggerAxis.x, currentTriggerAxis.y);
                 gripAxis = new Vector2(currentGripAxis.x, currentGripAxis.y);
                 hairTriggerDelta = VRTK_SDK_Bridge.GetControllerHairlineDelta(SDK_BaseController.ButtonTypes.TriggerHairline, controllerReference);

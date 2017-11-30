@@ -164,11 +164,13 @@ Provides a simple trigger collider volume that when a controller enters will ena
  * Place the `VRTK/Prefabs/ControllerRigidbodyActivator/ControllerRigidbodyActivator` prefab in the scene at the location where the controller rigidbody should be automatically activated.
  * The prefab contains a default sphere collider to determine ths collision, this collider component can be customised in the inspector or can be replaced with another collider component (set to `Is Trigger`).
 
-  > If the prefab is placed as a child of the target interactable game object then the collider volume on the prefab will trigger collisions on the interactable object.
+  > If the prefab is placed as a child of the target Interactable Object then the collider volume on the prefab will trigger collisions on the Interactable Object.
 
 ### Inspector Parameters
 
- * **Is Enabled:** If this is checked then the collider will have it's rigidbody toggled on and off during a collision.
+ * **Is Enabled:** If this is checked then the Collider will have it's Rigidbody toggled on and off during a collision.
+ * **Activate Interact Touch:** If this is checked then the Rigidbody Activator will activate the rigidbody and colliders on the Interact Touch script.
+ * **Activate Tracked Collider:** If this is checked then the Rigidbody Activator will activate the rigidbody and colliders on the Controller Tracked Collider script.
 
 ### Class Events
 
@@ -288,8 +290,6 @@ Adds a collection of Object Tooltips to the Controller providing information to 
  * **Controller Events:** The controller to read the controller events from. If this is blank then it will attempt to get a controller events script from the same or parent GameObject.
  * **Headset Controller Aware:** The headset controller aware script to use to see if the headset is looking at the controller. If this is blank then it will attempt to get a controller events script from the same or parent GameObject.
  * **Hide When Not In View:** If this is checked then the tooltips will be hidden when the headset is not looking at the controller.
- * **Retry Init Max Tries:** The total number of initialisation attempts to make when waiting for the button transforms to initialise.
- * **Retry Init Counter:** The amount of seconds to wait before re-attempting to initialise the controller tooltips if the button transforms have not been initialised yet.
 
 ### Class Events
 
@@ -597,6 +597,7 @@ Adds a Pointer Direction Indicator to a pointer renderer and determines a given 
 ### Inspector Parameters
 
  * **Touchpad Deadzone:** The touchpad axis needs to be above this deadzone for it to register as a valid touchpad angle.
+ * **Coordinate Axis:** The axis to use for the direction coordinates.
  * **Include Headset Offset:** If this is checked then the reported rotation will include the offset of the headset rotation in relation to the play area.
  * **Display On Invalid Location:** If this is checked then the direction indicator will be displayed when the location is invalid.
  * **Use Pointer Color:** If this is checked then the pointer valid/invalid colours will also be used to change the colour of the direction indicator.
@@ -1249,7 +1250,8 @@ Provides a basis of being able to emit a pointer from a specified GameObject.
  * **Select After Hover Duration:** The amount of time the pointer can be over the same collider before it automatically attempts to select it. 0f means no selection attempt will be made.
  * **Interact With Objects:** If this is checked then the pointer will be an extension of the controller and able to interact with Interactable Objects.
  * **Grab To Pointer Tip:** If `Interact With Objects` is checked and this is checked then when an object is grabbed with the pointer touching it, the object will attach to the pointer tip and not snap to the controller.
- * **Controller:** An optional controller that will be used to toggle the pointer. If the script is being applied onto a controller then this parameter can be left blank as it will be auto populated by the controller the script is on at runtime.
+ * **Attached To:** An optional GameObject that determines what the pointer is to be attached to. If this is left blank then the GameObject the script is on will be used.
+ * **Controller Events:** An optional Controller Events that will be used to toggle the pointer. If the script is being applied onto a controller then this parameter can be left blank as it will be auto populated by the controller the script is on at runtime.
  * **Interact Use:** An optional InteractUse script that will be used when using interactable objects with pointer. If this is left blank then it will attempt to get the InteractUse script from the same GameObject and if it cannot find one then it will attempt to get it from the attached controller.
  * **Custom Origin:** A custom transform to use as the origin of the pointer. If no pointer origin transform is provided then the transform the script is attached to is used.
 
@@ -2218,6 +2220,7 @@ Provides the ability to control a GameObject's position based on the position of
 
 ### Inspector Parameters
 
+ * **Coordinate Axis:** The axis to use for the direction coordinates.
  * **Primary Activation Button:** An optional button that has to be engaged to allow the touchpad control to activate.
  * **Action Modifier Button:** An optional button that when engaged will activate the modifier on the touchpad control action.
  * **Axis Deadzone:** A deadzone threshold on the touchpad that will ignore input if the touch position is within the specified deadzone. Between `0f` and `1f`.
@@ -2549,6 +2552,7 @@ Applys a tunnel overlay effect to the active VR camera when the play area is mov
  * **Minimum Speed:** Minimum movement speed for the effect to activate.
  * **Maximum Speed:** Maximum movement speed where the effect will have its max settings applied.
  * **Effect Color:** The color to use for the tunnel effect.
+ * **Effect Skybox:** An optional skybox texture to use for the tunnel effect.
  * **Initial Effect Size:** The initial amount of screen coverage the tunnel to consume without any movement.
  * **Maximum Effect Size:** Screen coverage at the maximum tracked values.
  * **Feather Size:** Feather effect size around the cut-off as fraction of screen.
@@ -3107,6 +3111,7 @@ A collection of scripts that provide the ability denote objects (such as control
  * [Interact Near Touch](#interact-near-touch-vrtk_interactneartouch)
  * [Interact Grab](#interact-grab-vrtk_interactgrab)
  * [Interact Use](#interact-use-vrtk_interactuse)
+ * [Controller Tracked Collider](#controller-tracked-collider-vrtk_controllertrackedcollider)
  * [Controller Highlighter](#controller-highlighter-vrtk_controllerhighlighter)
  * [Object Auto Grab](#object-auto-grab-vrtk_objectautograb)
 
@@ -3147,6 +3152,7 @@ A relationship to a physical VR controller and emits events based on the inputs 
    * `GripClick` - The grip button is pressed all the way down.
    * `TouchpadTouch` - The touchpad is touched (without pressing down to click).
    * `TouchpadPress` - The touchpad is pressed (to the point of hearing a click).
+   * `TouchpadTwoTouch` - The touchpad two is touched (without pressing down to click).
    * `ButtonOneTouch` - The button one is touched.
    * `ButtonOnePress` - The button one is pressed.
    * `ButtonTwoTouch` - The button two is touched.
@@ -3174,8 +3180,9 @@ A relationship to a physical VR controller and emits events based on the inputs 
  * `public bool gripAxisChanged` - This will be true if the grip has been squeezed more or less. Default: `false`
  * `public bool touchpadPressed` - This will be true if the touchpad is held down. Default: `false`
  * `public bool touchpadTouched` - This will be true if the touchpad is being touched. Default: `false`
- * `public bool touchpadAxisChanged` - This will be true if the touchpad touch position has changed. Default: `false`
+ * `public bool touchpadAxisChanged` - This will be true if the touchpad position has changed. Default: `false`
  * `public bool touchpadSenseAxisChanged` - This will be true if the touchpad sense is being touched more or less. Default: `false`
+ * `public bool touchpadTwoTouched` - This will be true if the touchpad two is being touched. Default: `false`
  * `public bool buttonOnePressed` - This will be true if button one is held down. Default: `false`
  * `public bool buttonOneTouched` - This will be true if button one is being touched. Default: `false`
  * `public bool buttonTwoPressed` - This will be true if button two is held down. Default: `false`
@@ -3213,6 +3220,9 @@ A relationship to a physical VR controller and emits events based on the inputs 
  * `TouchpadTouchEnd` - Emitted when the touchpad is no longer being touched.
  * `TouchpadAxisChanged` - Emitted when the touchpad is being touched in a different location.
  * `TouchpadSenseAxisChanged` - Emitted when the amount of touch on the touchpad sense changes.
+ * `TouchpadTwoTouchStart` - Emitted when the touchpad two is touched (without pressing down to click).
+ * `TouchpadTwoTouchEnd` - Emitted when the touchpad two is no longer being touched.
+ * `TouchpadTwoAxisChanged` - Emitted when the touchpad two is being touched in a different location.
  * `ButtonOneTouchStart` - Emitted when button one is touched.
  * `ButtonOneTouchEnd` - Emitted when button one is no longer being touched.
  * `ButtonOnePressed` - Emitted when button one is pressed.
@@ -3245,6 +3255,8 @@ Adding the `VRTK_ControllerEvents_UnityEvents` component to `VRTK_ControllerEven
  * `float buttonPressure` - The amount of pressure being applied to the button pressed. `0f` to `1f`.
  * `Vector2 touchpadAxis` - The position the touchpad is touched at. `(0,0)` to `(1,1)`.
  * `float touchpadAngle` - The rotational position the touchpad is being touched at, 0 being top, 180 being bottom and all other angles accordingly. `0f` to `360f`.
+ * `Vector2 touchpadTwoAxis` - The position the touchpad two is touched at. `(0,0)` to `(1,1)`.
+ * `float touchpadTwoAngle` - The rotational position the touchpad two is being touched at, 0 being top, 180 being bottom and all other angles accordingly. `0f` to `360f`.
 
 ### Class Methods
 
@@ -3283,6 +3295,17 @@ The SetControllerEvent/3 method is used to set the Controller Event payload.
 
 The GetControllerType method is a shortcut to retrieve the current controller type the Controller Events is attached to.
 
+#### GetAxis/1
+
+  > `public virtual Vector2 GetAxis(SDK_BaseController.Vector2Axis vector2AxisType)`
+
+ * Parameters
+   * `SDK_BaseController.Vector2Axis vector2AxisType` - The Vector2AxisType to check the touch position of.
+ * Returns
+   * `Vector2` - A two dimensional vector containing the `x` and `y` position of where the given axis type is being touched. `(0,0)` to `(1,1)`.
+
+The GetAxis method returns the coordinates of where the given axis type is being touched.
+
 #### GetTouchpadAxis/0
 
   > `public virtual Vector2 GetTouchpadAxis()`
@@ -3294,6 +3317,28 @@ The GetControllerType method is a shortcut to retrieve the current controller ty
 
 The GetTouchpadAxis method returns the coordinates of where the touchpad is being touched and can be used for directional input via the touchpad. The `x` value is the horizontal touch plane and the `y` value is the vertical touch plane.
 
+#### GetTouchpadTwoAxis/0
+
+  > `public virtual Vector2 GetTouchpadTwoAxis()`
+
+ * Parameters
+   * _none_
+ * Returns
+   * `Vector2` - A two dimensional vector containing the `x` and `y` position of where the touchpad two is being touched. `(0,0)` to `(1,1)`.
+
+The GetTouchpadTwoAxis method returns the coordinates of where the touchpad two is being touched and can be used for directional input via the touchpad two. The `x` value is the horizontal touch plane and the `y` value is the vertical touch plane.
+
+#### GetAxisAngle/1
+
+  > `public virtual float GetAxisAngle(SDK_BaseController.Vector2Axis vector2AxisType)`
+
+ * Parameters
+   * `SDK_BaseController.Vector2Axis vector2AxisType` - The Vector2AxisType to get the touch angle for.
+ * Returns
+   * `float` - A float representing the angle of where the given axis type is being touched. `0f` to `360f`.
+
+The GetAxisAngle method returns the angle of where the given axis type is currently being touched with the top of the given axis type being `0` degrees and the bottom of the given axis type being `180` degrees.
+
 #### GetTouchpadAxisAngle/0
 
   > `public virtual float GetTouchpadAxisAngle()`
@@ -3304,6 +3349,17 @@ The GetTouchpadAxis method returns the coordinates of where the touchpad is bein
    * `float` - A float representing the angle of where the touchpad is being touched. `0f` to `360f`.
 
 The GetTouchpadAxisAngle method returns the angle of where the touchpad is currently being touched with the top of the touchpad being `0` degrees and the bottom of the touchpad being `180` degrees.
+
+#### GetTouchpadTwoAxisAngle/0
+
+  > `public virtual float GetTouchpadTwoAxisAngle()`
+
+ * Parameters
+   * _none_
+ * Returns
+   * `float` - A float representing the angle of where the touchpad two is being touched. `0f` to `360f`.
+
+The GetTouchpadTwoAxisAngle method returns the angle of where the touchpad two is currently being touched with the top of the touchpad two being `0` degrees and the bottom of the touchpad two being `180` degrees.
 
 #### GetTriggerAxis/0
 
@@ -3414,6 +3470,18 @@ The GetPinkyFingerSenseAxis method returns a float representing how much of the 
    * `bool` - Returns `true` if any of the controller buttons are currently being pressed.
 
 The AnyButtonPressed method returns true if any of the controller buttons are being pressed and this can be useful to determine if an action can be taken whilst the user is using the controller.
+
+#### GetAxisState/2
+
+  > `public virtual bool GetAxisState(SDK_BaseController.Vector2Axis axis, SDK_BaseController.ButtonPressTypes pressType)`
+
+ * Parameters
+   * `SDK_BaseController.Vector2Axis axis` - The axis to check on.
+   * `SDK_BaseController.ButtonPressTypes pressType` - The button press type to check for.
+ * Returns
+   * `bool` - Returns `true` if the axis is being interacted with via the given press type.
+
+The GetAxisState method takes a given Vector2Axis and returns a boolean whether that given axis is currently being touched or pressed.
 
 #### IsButtonPressed/1
 
@@ -3729,7 +3797,7 @@ Determines if the Interact Touch can initiate a grab with the touched Interactab
  * **Grab Button:** The button used to grab/release a touched Interactable Object.
  * **Grab Precognition:** An amount of time between when the grab button is pressed to when the controller is touching an Interactable Object to grab it.
  * **Throw Multiplier:** An amount to multiply the velocity of any Interactable Object being thrown.
- * **Create Rigid Body When Not Touching:** If this is checked and the Interact Touch is not touching an Interactable Object when the grab button is pressed then a rigid body is added to the interacting object to allow it to push other rigid body objects around.
+ * **Create Rigid Body When Not Touching:** If this is checked and the Interact Touch is not touching an Interactable Object when the grab button is pressed then a Rigidbody is added to the interacting object to allow it to push other Rigidbody objects around.
  * **Controller Attach Point:** The rigidbody point on the controller model to snap the grabbed Interactable Object to. If blank it will be set to the SDK default.
  * **Controller Events:** The Controller Events to listen for the events on. If the script is being applied onto a controller then this parameter can be left blank as it will be auto populated by the controller the script is on at runtime.
  * **Interact Touch:** The Interact Touch to listen for touches on. If the script is being applied onto a controller then this parameter can be left blank as it will be auto populated by the controller the script is on at runtime.
@@ -3910,6 +3978,56 @@ The AttemptUse method will attempt to use the currently touched Interactable Obj
 
 ---
 
+## Controller Tracked Collider (VRTK_ControllerTrackedCollider)
+ > extends VRTK_SDKControllerReady
+
+### Overview
+
+Provides a controller collider collection that follows the controller rigidbody via the physics system.
+
+**Required Components:**
+ * `VRTK_InteractTouch` - An Interact Touch script to determine which controller rigidbody to follow.
+
+**Optional Components:**
+ * `VRTK_ControllerEvents` - The events component to listen for the button presses on. This must be applied in the same object hierarchy as the Interact Touch script if one is not provided via the `Controller Events` parameter.
+
+**Script Usage:**
+ * Place the `VRTK_ControllerTrackedCollider` script on any active scene GameObject except the Script Alias objects.
+ * Assign the controller to track by applying an Interact Touch to the relevant Script Alias and then providing that reference to the `Interact Touch` parameter on this script.
+
+### Inspector Parameters
+
+ * **Interact Touch:** The Interact Touch script to relate the tracked collider to.
+ * **Max Resnap Distance:** The maximum distance the collider object can be from the controller before it automatically snaps back to the same position.
+ * **Activation Button:** The button to press to activate the colliders on the tracked collider set. If `Undefined` then it will always be active.
+ * **Controller Events:** An optional Controller Events to use for listening to the button events. If this is left blank then it will attempt to be retrieved from the same controller as the `Interact Touch` parameter.
+
+### Class Methods
+
+#### ToggleColliders/1
+
+  > `public virtual void ToggleColliders(bool state)`
+
+ * Parameters
+   * `bool state` - If `true` then the tracked colliders will be able to affect other Rigidbodies.
+ * Returns
+   * _none_
+
+The ToggleColliders method toggles the collision state of the tracked colliders.
+
+#### TrackedColliders/0
+
+  > `public virtual Collider[] TrackedColliders()`
+
+ * Parameters
+   * _none_
+ * Returns
+   * `Collider[]` - A Collider array of the tracked colliders.
+
+The TrackedColliders method returns an array of the tracked colliders.
+
+---
+
 ## Controller Highlighter (VRTK_ControllerHighlighter)
 
 ### Overview
@@ -4047,8 +4165,11 @@ Attempt to automatically grab a specified Interactable Object.
  * **Object Is Prefab:** If the `Object To Grab` is a prefab then this needs to be checked, if the `Object To Grab` already exists in the scene then this needs to be unchecked.
  * **Clone Grabbed Object:** If this is checked then the `Object To Grab` will be cloned into a new Interactable Object and grabbed by the Interact Grab leaving the existing Interactable Object in the scene. This is required if the same Interactable Object is to be grabbed to multiple instances of Interact Grab. It is also required to clone a grabbed Interactable Object if it is a prefab as it needs to exist within the scene to be grabbed.
  * **Always Clone On Enable:** If `Clone Grabbed Object` is checked and this is checked, then whenever this script is disabled and re-enabled, it will always create a new clone of the Interactable Object to grab. If this is unchecked then the original cloned Interactable Object will attempt to be grabbed again. If the original cloned object no longer exists then a new clone will be created.
+ * **Attempt Secondary Grab:** If this is checked then the `Object To Grab` will attempt to be secondary grabbed as well as primary grabbed.
  * **Interact Touch:** The Interact Touch to listen for touches on. If the script is being applied onto a controller then this parameter can be left blank as it will be auto populated by the controller the script is on at runtime.
  * **Interact Grab:** The Interact Grab to listen for grab actions on. If the script is being applied onto a controller then this parameter can be left blank as it will be auto populated by the controller the script is on at runtime.
+ * **Secondary Interact Touch:** The secondary controller Interact Touch to listen for touches on. If this field is left blank then it will be looked up on the opposite controller script alias at runtime.
+ * **Secondary Interact Grab:** The secondary controller Interact Grab to listen for grab actions on. If this field is left blank then it will be looked up on the opposite controller script alias at runtime.
 
 ### Class Events
 
@@ -4084,6 +4205,7 @@ The ClearPreviousClone method resets the previous cloned Interactable Object to 
 A collection of scripts that provide the ability denote objects as being interactable and providing functionality when an object is interected with.
 
  * [Interactable Object](#interactable-object-vrtk_interactableobject)
+ * [Interactable Listener](#interactable-listener-vrtk_interactablelistener)
  * [Interact Haptics](#interact-haptics-vrtk_interacthaptics)
  * [Interact Object Appearance](#interact-object-appearance-vrtk_interactobjectappearance)
  * [Interact Object Highlighter](#interact-object-highlighter-vrtk_interactobjecthighlighter)
@@ -4105,7 +4227,6 @@ Determines if the GameObject can be interacted with.
  * `Rigidbody` - A Unity Rigidbody to allow the GameObject to be affected by the Unity Physics System (not required for Climbable Grab Attach Types).
  * `VRTK_BaseGrabAttach` - A Grab Attach mechanic for determining how the Interactable Object is grabbed by the primary interacting object.
  * `VRTK_BaseGrabAction` - A Grab Action mechanic for determining how to manipulate the Interactable Object when grabbed by the secondary interacting object.
- * `VRTK_BaseHighlighter` - The highlighter to use when highligting the Interactable Object. If one is not already injected in the `Object Highlighter` parameter then the component on the same GameObject will be used.
 
 **Script Usage:**
  * Place the `VRTK_InteractableObject` script onto the GameObject that is to be interactable.
@@ -4130,7 +4251,6 @@ Determines if the GameObject can be interacted with.
 
  * **Disable When Idle:** If this is checked then the Interactable Object component will be disabled when the Interactable Object is not being interacted with.
  * **Allowed Near Touch Controllers:** Determines which controller can initiate a near touch action.
- * **Touch Highlight Color:** The Color to highlight the object when it is touched.
  * **Allowed Touch Controllers:** Determines which controller can initiate a touch action.
  * **Ignored Colliders:** An array of colliders on the GameObject to ignore when being touched.
  * **Is Grabbable:** Determines if the Interactable Object can be grabbed.
@@ -4147,7 +4267,6 @@ Determines if the GameObject can be interacted with.
  * **Pointer Activates Use Action:** If this is checked then when a Pointer collides with the Interactable Object it will activate it's use action. If the the `Hold Button To Use` parameter is unchecked then whilst the Pointer is collising with the Interactable Object it will run the `Using` method. If `Hold Button To Use` is unchecked then the `Using` method will be run when the Pointer is deactivated. The Pointer will not emit the `Destination Set` event if it is affecting an Interactable Object with this setting checked as this prevents unwanted teleporting from happening when using an Interactable Object with a pointer.
  * **Use Override Button:** Setting to a button will ensure the override button is used to use this specific Interactable Object. Setting to `Undefined` will mean the `Use Button` on the Interact Use script will use the object.
  * **Allowed Use Controllers:** Determines which controller can initiate a use action.
- * **Object Highlighter:** An optional Highlighter to use when highlighting this Interactable Object. If this is left blank, then the first active highlighter on the same GameObject will be used, if one isn't found then a Material Color Swap Highlighter will be created at runtime.
 
 ### Class Variables
 
@@ -4333,39 +4452,6 @@ The StartUsing method is called automatically when the Interactable Object is us
    * _none_
 
 The StopUsing method is called automatically when the Interactable Object has stopped being used.
-
-#### Highlight/1
-
-  > `public virtual void Highlight(Color highlightColor)`
-
- * Parameters
-   * `Color highlightColor` - The colour to apply to the highlighter.
- * Returns
-   * _none_
-
-The Highlight method turns on the highlighter attached to the Interactable Object with the given Color.
-
-#### Unhighlight/0
-
-  > `public virtual void Unhighlight()`
-
- * Parameters
-   * _none_
- * Returns
-   * _none_
-
-The Unhighlight method turns off the highlighter attached to the Interactable Object.
-
-#### ResetHighlighter/0
-
-  > `public virtual void ResetHighlighter()`
-
- * Parameters
-   * _none_
- * Returns
-   * _none_
-
-The ResetHighlighter method is used to reset the currently attached highlighter.
 
 #### PauseCollisions/1
 
@@ -4688,7 +4774,19 @@ The GetSecondaryAttachPoint returns the Transform that determines where the seco
 
 ---
 
+## Interactable Listener (VRTK_InteractableListener)
+
+### Overview
+
+Provides a base that classes which require to subscribe to the interaction events of an Interactable Object can inherit from.
+
+**Script Usage:**
+  > This is an abstract class that is to be inherited to a concrete class that provides interaction event listener functionality, therefore this script should not be directly used.
+
+---
+
 ## Interact Haptics (VRTK_InteractHaptics)
+ > extends [VRTK_InteractableListener](#interactable-listener-vrtk_interactablelistener)
 
 ### Overview
 
@@ -4803,6 +4901,7 @@ The HapticsOnUse method triggers the haptic feedback on the given controller for
 ---
 
 ## Interact Object Appearance (VRTK_InteractObjectAppearance)
+ > extends [VRTK_InteractableListener](#interactable-listener-vrtk_interactablelistener)
 
 ### Overview
 
@@ -4878,13 +4977,17 @@ Adding the `VRTK_InteractObjectAppearance_UnityEvents` component to `VRTK_Intera
 ---
 
 ## Interact Object Highlighter (VRTK_InteractObjectHighlighter)
+ > extends [VRTK_InteractableListener](#interactable-listener-vrtk_interactablelistener)
 
 ### Overview
 
 Enable highlighting of an Interactable Object base on interaction type.
 
 **Required Components:**
- * `VRTK_InteractableObject` - The Interactable Object component to detect interactions on. This must be applied on the same GameObject as this script if one is not provided via the `Object To Affect` parameter.
+ * `VRTK_InteractableObject` - The Interactable Object component to detect interactions on. This must be applied on the same GameObject as this script if one is not provided via the `Object To Monitor` parameter.
+
+**Optional Components:**
+ * `VRTK_BaseHighlighter` - The highlighter to use when highligting the Object. If one is not already injected in the `Object Highlighter` parameter then the component on the same GameObject will be used.
 
 **Script Usage:**
  * Place the `VRTK_InteractObjectHighlighter` script on either:
@@ -4897,7 +5000,8 @@ Enable highlighting of an Interactable Object base on interaction type.
  * **Touch Highlight:** The colour to highlight the object on the touch interaction.
  * **Grab Highlight:** The colour to highlight the object on the grab interaction.
  * **Use Highlight:** The colour to highlight the object on the use interaction.
- * **Object To Affect:** The Interactable Object to affect the highlighter of. If this is left blank, then the Interactable Object will need to be on the current or a parent GameObject.
+ * **Object To Highlight:** The GameObject to highlight.
+ * **Object Highlighter:** An optional Highlighter to use when highlighting the specified Object. If this is left blank, then the first active highlighter on the same GameObject will be used, if one isn't found then a Material Color Swap Highlighter will be created at runtime.
 
 ### Class Events
 
@@ -4912,10 +5016,46 @@ Adding the `VRTK_InteractObjectHighlighter_UnityEvents` component to `VRTK_Inter
 
 ### Event Payload
 
- * `VRTK_InteractableObject affectedObject` - The GameObject that is being highlighted.
+ * `VRTK_InteractableObject.InteractionType interactionType` - The type of interaction occuring on the object to monitor.
+ * `Color highlightColor` - The colour being provided to highlight the affected object with.
  * `GameObject affectingObject` - The GameObject is initiating the highlight via an interaction.
+ * `VRTK_InteractableObject objectToMonitor` - The Interactable Object that is being interacted with.
+ * `GameObject affectedObject` - The GameObject that is being highlighted.
 
 ### Class Methods
+
+#### ResetHighlighter/0
+
+  > `public virtual void ResetHighlighter()`
+
+ * Parameters
+   * _none_
+ * Returns
+   * _none_
+
+The ResetHighlighter method is used to reset the currently attached highlighter.
+
+#### Highlight/1
+
+  > `public virtual void Highlight(Color highlightColor)`
+
+ * Parameters
+   * `Color highlightColor` - The colour to apply to the highlighter.
+ * Returns
+   * _none_
+
+The Highlight method turns on the highlighter with the given Color.
+
+#### Unhighlight/0
+
+  > `public virtual void Unhighlight()`
+
+ * Parameters
+   * _none_
+ * Returns
+   * _none_
+
+The Unhighlight method turns off the highlighter.
 
 #### GetCurrentHighlightColor/0
 
@@ -4931,6 +5071,7 @@ The GetCurrentHighlightColor returns the colour that the Interactable Object is 
 ---
 
 ## Object Touch Auto Interact (VRTK_ObjectTouchAutoInteract)
+ > extends [VRTK_InteractableListener](#interactable-listener-vrtk_interactablelistener)
 
 ### Overview
 
@@ -5356,6 +5497,7 @@ Applies velocity to the grabbed Interactable Object to ensure it tracks the posi
  * **Detach Distance:** The maximum distance the grabbing object is away from the Interactable Object before it is automatically dropped.
  * **Velocity Limit:** The maximum amount of velocity magnitude that can be applied to the Interactable Object. Lowering this can prevent physics glitches if Interactable Objects are moving too fast.
  * **Angular Velocity Limit:** The maximum amount of angular velocity magnitude that can be applied to the Interactable Object. Lowering this can prevent physics glitches if Interactable Objects are moving too fast.
+ * **Max Distance Delta:** The maximum difference in distance to the tracked position.
 
 ### Class Methods
 
@@ -6375,7 +6517,6 @@ Provides a base that all physics based Controllables can inherit from.
 
 ### Inspector Parameters
 
- * **Auto Interaction:** If this is checked then a VRTK_ControllerRigidbodyActivator will automatically be added to the Controllable so the interacting object's rigidbody is enabled on touch.
  * **Connected To:** The Rigidbody that the Controllable is connected to.
 
 ### Class Methods
@@ -7864,8 +8005,10 @@ Provides the ability to interact with UICanvas elements and the contained Unity 
  * **Click Method:** Determines when the UI Click event action should happen.
  * **Attempt Click On Deactivate:** Determines whether the UI click action should be triggered when the pointer is deactivated. If the pointer is hovering over a clickable element then it will invoke the click action on that element. Note: Only works with `Click Method =  Click_On_Button_Up`
  * **Click After Hover Duration:** The amount of time the pointer can be over the same UI element before it automatically attempts to click it. 0f means no click attempt will be made.
- * **Controller:** The controller that will be used to toggle the pointer. If the script is being applied onto a controller then this parameter can be left blank as it will be auto populated by the controller the script is on at runtime.
- * **Pointer Origin Transform:** A custom transform to use as the origin of the pointer. If no pointer origin transform is provided then the transform the script is attached to is used.
+ * **Maximum Length:** The maximum length the UI Raycast will reach.
+ * **Attached To:** An optional GameObject that determines what the pointer is to be attached to. If this is left blank then the GameObject the script is on will be used.
+ * **Controller Events:** The Controller Events that will be used to toggle the pointer. If the script is being applied onto a controller then this parameter can be left blank as it will be auto populated by the controller the script is on at runtime.
+ * **Custom Origin:** A custom transform to use as the origin of the pointer. If no pointer origin transform is provided then the transform the script is attached to is used.
 
 ### Class Variables
 
@@ -7906,6 +8049,17 @@ Adding the `VRTK_UIPointer_UnityEvents` component to `VRTK_UIPointer` object all
  * `RaycastResult raycastResult` - The raw raycast result of the UI ray collision.
 
 ### Class Methods
+
+#### GetPointerLength/1
+
+  > `public static float GetPointerLength(int pointerId)`
+
+ * Parameters
+   * `int pointerId` - The pointer ID for the UI Pointer to recieve the length for.
+ * Returns
+   * `float` - The maximum length the UI Pointer will cast to.
+
+The GetPointerLength method retrieves the maximum UI Pointer length for the given pointer ID.
 
 #### SetEventSystem/1
 
@@ -8100,6 +8254,7 @@ A helper class that simply holds references to both the SDK_ScriptingDefineSymbo
  * **Auto Manage VR Settings:** Determines whether the VR settings of the Player Settings are automatically adjusted to allow for all the used SDKs in the SDK Setups list below.
  * **Auto Load Setup:** Determines whether the SDK Setups list below is used whenever the SDK Manager is enabled. The first loadable Setup is then loaded.
  * **Setups:** The list of SDK Setups to choose from.
+ * **Exclude Target Groups:** The list of Build Target Groups to exclude.
 
 ### Class Variables
 
@@ -8319,32 +8474,32 @@ Holds all the info necessary to describe an SDK.
 
 ### Class Methods
 
-#### ActualType>/0
+#### Create<BaseType, FallbackType, ActualType>/0
 
   > `public static VRTK_SDKInfo[] Create<BaseType, FallbackType, ActualType>() where BaseType : SDK_Base where FallbackType : BaseType where ActualType : BaseType`
 
  * Type Params
-   * `FallbackType,` - The SDK base type. Must be a subclass of SDK_Base.
-   * `FallbackType,` - The SDK type to fall back on if problems occur. Must be a subclass of `BaseType`.
-   * `FallbackType,` - The SDK type to use. Must be a subclass of `BaseType`.
+   * `BaseType` - The SDK base type. Must be a subclass of SDK_Base.
+   * `FallbackType` - The SDK type to fall back on if problems occur. Must be a subclass of `BaseType`.
+   * `ActualType` - The SDK type to use. Must be a subclass of `BaseType`.
  * Parameters
    * _none_
  * Returns
-   * `FallbackType,` - Multiple newly created instances.
+   * `VRTK_SDKInfo[]` - Multiple newly created instances.
 
 Creates new SDK infos for a type that is known at compile time.
 
-#### FallbackType>/1
+#### Create<BaseType, FallbackType>/1
 
   > `public static VRTK_SDKInfo[] Create<BaseType, FallbackType>(Type actualType) where BaseType : SDK_Base where FallbackType : BaseType`
 
  * Type Params
-   * `Create<BaseType,` - The SDK base type. Must be a subclass of SDK_Base.
-   * `Create<BaseType,` - The SDK type to fall back on if problems occur. Must be a subclass of `BaseType.
+   * `BaseType` - The SDK base type. Must be a subclass of SDK_Base.
+   * `FallbackType` - The SDK type to fall back on if problems occur. Must be a subclass of `BaseType.
  * Parameters
    * `Type actualType` - The SDK type to use. Must be a subclass of `BaseType.
  * Returns
-   * `Create<BaseType,` - Multiple newly created instances.
+   * `VRTK_SDKInfo[]` - Multiple newly created instances.
 
 Creates new SDK infos for a type.
 
@@ -8373,6 +8528,14 @@ The Device Finder offers a collection of static methods that can be called to fi
    * `Headset` - The headset.
    * `LeftController` - The left hand controller.
    * `RightController` - The right hand controller.
+ * `public enum Headsets` - Possible headsets
+   * `Unknown` - An unknown headset.
+   * `OculusRift` - A summary of all Oculus Rift headset versions.
+   * `OculusRiftCV1` - A specific version of the Oculus Rift headset, the Consumer Version 1.
+   * `Vive` - A summary of all HTC Vive headset versions.
+   * `ViveMV` - A specific version of the HTC Vive headset, the first consumer version.
+   * `ViveDVT` - A specific version of the HTC Vive headset, the first consumer version.
+   * `OculusRiftES07` - A specific version of the Oculus Rift headset, the rare ES07.
 
 ### Class Methods
 
@@ -8543,6 +8706,17 @@ The IsControllerLeftHand method is used to check if a given controller game obje
 
 The IsControllerRightHand method is used to check if a given controller game object is the right handed controller.
 
+#### GetOppositeHand/1
+
+  > `public static SDK_BaseController.ControllerHand GetOppositeHand(SDK_BaseController.ControllerHand currentHand)`
+
+ * Parameters
+   * `SDK_BaseController.ControllerHand currentHand` - The current hand.
+ * Returns
+   * `SDK_BaseController.ControllerHand` - The opposite hand.
+
+The GetOppositeHand method returns the other hand type from the current hand given.
+
 #### GetActualController/1
 
   > `public static GameObject GetActualController(GameObject givenController)`
@@ -8653,27 +8827,27 @@ The HeadsetTransform method is used to retrieve the transform for the VR Headset
 
 The HeadsetCamera method is used to retrieve the transform for the VR Camera in the scene.
 
-#### ResetHeadsetTypeCache/0
+#### GetHeadsetTypeAsString/0
 
-  > `public static void ResetHeadsetTypeCache()`
+  > `public static string GetHeadsetTypeAsString()`
 
  * Parameters
    * _none_
  * Returns
-   * _none_
+   * `string` - The string of the headset connected.
 
-The ResetHeadsetTypeCache resets the cache holding the current headset type value.
+The GetHeadsetTypeAsString method returns a string representing the type of headset connected.
 
-#### GetHeadsetType/1
+#### GetHeadsetType/0
 
-  > `public static SDK_BaseHeadset.Headsets GetHeadsetType(bool summary = false)`
+  > `public static SDK_BaseHeadset.HeadsetType GetHeadsetType()`
 
  * Parameters
-   * `bool summary` - If this is `true`, then the generic name for the headset is returned not including the version type (e.g. OculusRift will be returned for DK2 and CV1).
+   * _none_
  * Returns
-   * `SDK_BaseHeadset.Headsets` - The Headset type that is connected.
+   * `SDK_BaseHeadset.HeadsetType` - The Headset type that is connected.
 
-The GetHeadsetType method returns the type of headset connected to the computer.
+The GetHeadsetType method returns the type of headset currently connected.
 
 #### PlayAreaTransform/0
 
@@ -8834,7 +9008,7 @@ The Mod method is used to find the remainder of the sum a/b.
   > `public static GameObject FindEvenInactiveGameObject<T>(string gameObjectName = null) where T : Component`
 
  * Type Params
-   * `GameObject` - The component type that needs to be on an ancestor of the wanted GameObject. Must be a subclass of `Component`.
+   * `T` - The component type that needs to be on an ancestor of the wanted GameObject. Must be a subclass of `Component`.
  * Parameters
    * `string gameObjectName` - The name of the wanted GameObject. If it contains a '/' character, this method traverses the hierarchy like a path name, beginning on the game object that has a component of type `T`.
  * Returns
@@ -8847,7 +9021,7 @@ Finds the first GameObject with a given name and an ancestor that has a specific
   > `public static T[] FindEvenInactiveComponents<T>() where T : Component`
 
  * Type Params
-   * `T[]` - The component type to search for. Must be a subclass of `Component`.
+   * `T` - The component type to search for. Must be a subclass of `Component`.
  * Parameters
    * _none_
  * Returns
@@ -9001,6 +9175,73 @@ The NormalizeValue method takes a given value between a specified range and retu
    * `Vector3` - The direction Vector3 based on the given axis index.
 
 The AxisDirection method returns the relevant direction Vector3 based on the axis index in relation to x,y,z.
+
+#### AddListValue<TValue>/3
+
+  > `public static bool AddListValue<TValue>(List<TValue> list, TValue value, bool preventDuplicates = false)`
+
+ * Type Params
+   * `TValue` - The datatype for the list value.
+ * Parameters
+   * `List<TValue> list` - The list to retrieve the value from.
+   * `TValue value` - The value to attempt to add to the list.
+   * `bool preventDuplicates` - If this is `false` then the value provided will always be appended to the list. If this is `true` the value provided will only be added to the list if it doesn't already exist.
+ * Returns
+   * `bool` - Returns `true` if the given value was successfully added to the list. Returns `false` if the given value already existed in the list and `preventDuplicates` is `true`.
+
+The AddListValue method adds the given value to the given list. If `preventDuplicates` is `true` then the given value will only be added if it doesn't already exist in the given list.
+
+#### GetDictionaryValue<TKey, TValue>/4
+
+  > `public static TValue GetDictionaryValue<TKey, TValue>(Dictionary<TKey, TValue> dictionary, TKey key, TValue defaultValue = default(TValue), bool setMissingKey = false)`
+
+ * Type Params
+   * `TKey` - The datatype for the dictionary key.
+   * `TValue` - The datatype for the dictionary value.
+ * Parameters
+   * `Dictionary<TKey, TValue> dictionary` - The dictionary to retrieve the value from.
+   * `TKey key` - The key to retrieve the value for.
+   * `TValue defaultValue` - The value to utilise when either setting the missing key (if `setMissingKey` is `true`) or the default value to return when no key is found (if `setMissingKey` is `false`).
+   * `bool setMissingKey` - If this is `true` and the given key is not present, then the dictionary value for the given key will be set to the `defaultValue` parameter. If this is `false` and the given key is not present then the `defaultValue` parameter will be returned as the value.
+ * Returns
+   * `TValue` - The found value for the given key in the given dictionary, or the default value if no key is found.
+
+The GetDictionaryValue method attempts to retrieve a value from a given dictionary for the given key. It removes the need for a double dictionary lookup to ensure the key is valid and has the option of also setting the missing key value to ensure the dictionary entry is valid.
+
+#### GetDictionaryValue<TKey, TValue>/5
+
+  > `public static TValue GetDictionaryValue<TKey, TValue>(Dictionary<TKey, TValue> dictionary, TKey key, out bool keyExists, TValue defaultValue = default(TValue), bool setMissingKey = false)`
+
+ * Type Params
+   * `TKey` - The datatype for the dictionary key.
+   * `TValue` - The datatype for the dictionary value.
+ * Parameters
+   * `Dictionary<TKey, TValue> dictionary` - The dictionary to retrieve the value from.
+   * `TKey key` - The key to retrieve the value for.
+   * `out bool keyExists` - Sets the given parameter to `true` if the key exists in the given dictionary or sets to `false` if the key didn't existing in the given dictionary.
+   * `TValue defaultValue` - The value to utilise when either setting the missing key (if `setMissingKey` is `true`) or the default value to return when no key is found (if `setMissingKey` is `false`).
+   * `bool setMissingKey` - If this is `true` and the given key is not present, then the dictionary value for the given key will be set to the `defaultValue` parameter. If this is `false` and the given key is not present then the `defaultValue` parameter will be returned as the value.
+ * Returns
+   * `TValue` - The found value for the given key in the given dictionary, or the default value if no key is found.
+
+The GetDictionaryValue method attempts to retrieve a value from a given dictionary for the given key. It removes the need for a double dictionary lookup to ensure the key is valid and has the option of also setting the missing key value to ensure the dictionary entry is valid.
+
+#### AddDictionaryValue<TKey, TValue>/4
+
+  > `public static bool AddDictionaryValue<TKey, TValue>(Dictionary<TKey, TValue> dictionary, TKey key, TValue value, bool overwriteExisting = false)`
+
+ * Type Params
+   * `TKey` - The datatype for the dictionary key.
+   * `TValue` - The datatype for the dictionary value.
+ * Parameters
+   * `Dictionary<TKey, TValue> dictionary` - The dictionary to set the value for.
+   * `TKey key` - The key to set the value for.
+   * `TValue value` - The value to set at the given key in the given dictionary.
+   * `bool overwriteExisting` - If this is `true` then the value for the given key will always be set to the provided value. If this is `false` then the value for the given key will only be set if the given key is not found in the given dictionary.
+ * Returns
+   * `bool` - Returns `true` if the given value was successfully added to the dictionary at the given key. Returns `false` if the given key already existed in the dictionary and `overwriteExisting` is `false`.
+
+The AddDictionaryValue method attempts to add a value for the given key in the given dictionary if the key does not already exist. If `overwriteExisting` is `true` then it always set the value even if they key exists.
 
 #### GetTypeUnknownAssembly/1
 
@@ -9375,11 +9616,12 @@ Follow `gameObjectToFollow` using the current settings.
 
 ### Overview
 
-Changes one game object's rigidbody to follow another game object's rigidbody.
+Changes one GameObject's rigidbody to follow another GameObject's rigidbody.
 
 ### Inspector Parameters
 
  * **Movement Option:** Specifies how to position and rotate the rigidbody.
+ * **Track Max Distance:** The maximum distance the tracked `Game Object To Change` Rigidbody can be from the `Game Object To Follow` Rigidbody before the position is forcibly set to match the position.
 
 ### Class Variables
 
@@ -9387,6 +9629,20 @@ Changes one game object's rigidbody to follow another game object's rigidbody.
    * `Set` - Use Rigidbody.position and Rigidbody.rotation.
    * `Move` - Use Rigidbody.MovePosition and Rigidbody.MoveRotation.
    * `Add` - Use Rigidbody.AddForce(Vector3) and Rigidbody.AddTorque(Vector3).
+   * `Track` - Use velocity and angular velocity with MoveTowards.
+
+### Class Methods
+
+#### Follow/0
+
+  > `public override void Follow()`
+
+ * Parameters
+   * _none_
+ * Returns
+   * _none_
+
+Follow `gameObjectToFollow` using the current settings.
 
 ---
 
@@ -9395,7 +9651,7 @@ Changes one game object's rigidbody to follow another game object's rigidbody.
 
 ### Overview
 
-Changes one game object's transform to follow another game object's transform.
+Changes one GameObject's transform to follow another GameObject's transform.
 
 ### Class Variables
 
@@ -9405,6 +9661,19 @@ Changes one game object's transform to follow another game object's transform.
    * `OnLateUpdate` - Follow in the LateUpdate method.
    * `OnPreRender` - Follow in the OnPreRender method. (This script doesn't have to be attached to a camera).
    * `OnPreCull` - Follow in the OnPreCull method. (This script doesn't have to be attached to a camera).
+
+### Class Methods
+
+#### Follow/0
+
+  > `public override void Follow()`
+
+ * Parameters
+   * _none_
+ * Returns
+   * _none_
+
+Follow `gameObjectToFollow` using the current settings.
 
 ---
 
@@ -9797,23 +10066,18 @@ This is an abstract class to implement the interface required by all implemented
 
 ### Class Variables
 
- * `public enum Headsets` - SDK Headset types.
-   * `Unknown` - An unknown headset.
-   * `OculusRift` - A summary of all Oculus Rift headset versions.
-   * `OculusRiftCV1` - A specific version of the Oculus Rift headset, the Consumer Version 1.
-   * `Vive` - A summary of all HTC Vive headset versions.
-   * `ViveMV` - A specific version of the HTC Vive headset, the first consumer version.
-   * `ViveDVT` - A specific version of the HTC Vive headset, the first consumer version.
-   * `OculusRiftES07` - A specific version of the Oculus Rift headset, the rare ES07.
-   * `GearVR` - A summary of all GearVR headset versions.
-   * `GearVRGalaxyNote5` - A specific version of the GearVR headset running on a Samsung Galaxy Note 5.
-   * `GearVRGalaxyS6` - A specific version of the GearVR headset running on a Samsung Galaxy S6.
-   * `GearVRGalaxyS6Edge` - A specific version of the GearVR headset running on a Samsung Galaxy S6 Edge.
-   * `GearVRGalaxyS7` - A specific version of the GearVR headset running on a Samsung Galaxy S7.
-   * `GearVRGalaxyS7Edge` - A specific version of the GearVR headset running on a Samsung Galaxy S7 Edge.
-   * `GearVRGalaxyS8` - A specific version of the GearVR headset running on a Samsung Galaxy S8.
-   * `GoogleCardboard` - A summary of all Google Cardboard headset versions.
-   * `Daydream` - A summary of all Google Daydream headset versions.
+ * `public enum HeadsetType` - The connected headset type
+   * `Undefined` - The headset connected is unknown.
+   * `Simulator` - The headset associated with the simulator.
+   * `HTCVive` - The HTC Vive headset.
+   * `OculusRiftDK1` - The Oculus Rift DK1 headset.
+   * `OculusRiftDK2` - The Oculus Rift DK2 headset.
+   * `OculusRift` - The Oculus Rift headset.
+   * `OculusGearVR` - The Oculus GearVR headset.
+   * `GoogleDaydream` - The Google Daydream headset.
+   * `GoogleCardboard` - The Google Cardboard headset.
+   * `HyperealVR` - The HyperealVR headset.
+   * `WindowsMixedReality` - The Windows Mixed Reality headset.
 
 ### Class Methods
 
@@ -9860,6 +10124,17 @@ The GetHeadset method returns the Transform of the object that is used to repres
    * `Transform` - A transform of the object holding the headset camera in the scene.
 
 The GetHeadsetCamera method returns the Transform of the object that is used to hold the headset camera in the scene.
+
+#### GetHeadsetType/0
+
+  > `public abstract string GetHeadsetType();`
+
+ * Parameters
+   * _none_
+ * Returns
+   * `string` - The string of the headset connected.
+
+The GetHeadsetType method returns a string representing the type of headset connected.
 
 #### GetHeadsetVelocity/0
 
@@ -9940,6 +10215,7 @@ This is an abstract class to implement the interface required by all implemented
    * `Trigger` - Trigger on the controller.
    * `TriggerHairline` - Trigger Hairline on the controller.
    * `Touchpad` - Touchpad on the controller.
+   * `TouchpadTwo` - Touchpad Two on the controller.
    * `MiddleFinger` - Middle Finger on the controller.
    * `RingFinger` - Ring Finger on the controller.
    * `PinkyFinger` - Pinky Finger on the controller.
@@ -9979,6 +10255,8 @@ This is an abstract class to implement the interface required by all implemented
    * `Oculus_OculusRemote` - The Oculus Remote for Oculus Utilities.
    * `Oculus_GearVRHMD` - The Oculus GearVR HMD controls for Oculus Utilities.
    * `Oculus_GearVRController` - The Oculus GearVR controller for Oculus Utilities.
+   * `WindowsMR_MotionController` - The Windows Mixed Reality Motion Controller for Windows Mixed Reality.
+   * `SteamVR_WindowsMRController` - The Windows Mixed Reality Motion Controller for SteamVR.
 
 ### Class Methods
 
@@ -10074,17 +10352,6 @@ The GetControllerByIndex method returns the GameObject of a controller with a sp
    * `Transform` - A Transform containing the origin of the controller.
 
 The GetControllerOrigin method returns the origin of the given controller.
-
-#### GenerateControllerPointerOrigin/1
-
-  > `public abstract Transform GenerateControllerPointerOrigin(GameObject parent);`
-
- * Parameters
-   * `GameObject parent` - The GameObject that the origin will become parent of. If it is a controller then it will also be used to determine the hand if required.
- * Returns
-   * `Transform` - A generated Transform that contains the custom pointer origin.
-
-The GenerateControllerPointerOrigin method can create a custom pointer origin Transform to represent the pointer position and forward.
 
 #### GetControllerLeftHand/1
 
@@ -10544,6 +10811,17 @@ The GetHeadset method returns the Transform of the object that is used to repres
 
 The GetHeadsetCamera method returns the Transform of the object that is used to hold the headset camera in the scene.
 
+#### GetHeadsetType/0
+
+  > `public override string GetHeadsetType()`
+
+ * Parameters
+   * _none_
+ * Returns
+   * `string` - The string of the headset connected.
+
+The GetHeadsetType method returns a string representing the type of headset connected.
+
 #### GetHeadsetVelocity/0
 
   > `public override Vector3 GetHeadsetVelocity()`
@@ -10706,17 +10984,6 @@ The GetControllerByIndex method returns the GameObject of a controller with a sp
    * `Transform` - A Transform containing the origin of the controller.
 
 The GetControllerOrigin method returns the origin of the given controller.
-
-#### GenerateControllerPointerOrigin/1
-
-  > `public override Transform GenerateControllerPointerOrigin(GameObject parent)`
-
- * Parameters
-   * `GameObject parent` - The GameObject that the origin will become parent of. If it is a controller then it will also be used to determine the hand if required.
- * Returns
-   * `Transform` - A generated Transform that contains the custom pointer origin.
-
-The GenerateControllerPointerOrigin method can create a custom pointer origin Transform to represent the pointer position and forward.
 
 #### GetControllerLeftHand/1
 
@@ -11163,6 +11430,17 @@ The GetHeadset method returns the Transform of the object that is used to repres
 
 The GetHeadsetCamera method returns the Transform of the object that is used to hold the headset camera in the scene.
 
+#### GetHeadsetType/0
+
+  > `public override string GetHeadsetType()`
+
+ * Parameters
+   * _none_
+ * Returns
+   * `string` - The string of the headset connected.
+
+The GetHeadsetType method returns a string representing the type of headset connected.
+
 #### GetHeadsetVelocity/0
 
   > `public override Vector3 GetHeadsetVelocity()`
@@ -11323,17 +11601,6 @@ The GetControllerByIndex method returns the GameObject of a controller with a sp
    * `Transform` - A Transform containing the origin of the controller.
 
 The GetControllerOrigin method returns the origin of the given controller.
-
-#### GenerateControllerPointerOrigin/1
-
-  > `public override Transform GenerateControllerPointerOrigin(GameObject parent)`
-
- * Parameters
-   * `GameObject parent` - The GameObject that the origin will become parent of. If it is a controller then it will also be used to determine the hand if required.
- * Returns
-   * `Transform` - A generated Transform that contains the custom pointer origin.
-
-The GenerateControllerPointerOrigin method can create a custom pointer origin Transform to represent the pointer position and forward.
 
 #### GetControllerLeftHand/1
 
@@ -11805,6 +12072,17 @@ The GetHeadset method returns the Transform of the object that is used to repres
 
 The GetHeadsetCamera/0 method returns the Transform of the object that is used to hold the headset camera in the scene.
 
+#### GetHeadsetType/0
+
+  > `public override string GetHeadsetType()`
+
+ * Parameters
+   * _none_
+ * Returns
+   * `string` - The string of the headset connected.
+
+The GetHeadsetType method returns a string representing the type of headset connected.
+
 #### GetHeadsetVelocity/0
 
   > `public override Vector3 GetHeadsetVelocity()`
@@ -11965,17 +12243,6 @@ The GetControllerByIndex method returns the GameObject of a controller with a sp
    * `Transform` - A Transform containing the origin of the controller.
 
 The GetControllerOrigin method returns the origin of the given controller.
-
-#### GenerateControllerPointerOrigin/1
-
-  > `public override Transform GenerateControllerPointerOrigin(GameObject parent)`
-
- * Parameters
-   * `GameObject parent` - The GameObject that the origin will become parent of. If it is a controller then it will also be used to determine the hand if required.
- * Returns
-   * `Transform` - A generated Transform that contains the custom pointer origin.
-
-The GenerateControllerPointerOrigin method can create a custom pointer origin Transform to represent the pointer position and forward.
 
 #### GetControllerLeftHand/1
 
@@ -12429,6 +12696,17 @@ The GetHeadset method returns the Transform of the object that is used to repres
 
 The GetHeadsetCamera method returns the Transform of the object that is used to hold the headset camera in the scene.
 
+#### GetHeadsetType/0
+
+  > `public override string GetHeadsetType()`
+
+ * Parameters
+   * _none_
+ * Returns
+   * `string` - The string of the headset connected.
+
+The GetHeadsetType method returns a string representing the type of headset connected.
+
 #### GetHeadsetVelocity/0
 
   > `public override Vector3 GetHeadsetVelocity()`
@@ -12599,17 +12877,6 @@ The GetControllerByIndex method returns the GameObject of a controller with a sp
    * `Transform` - A Transform containing the origin of the controller.
 
 The GetControllerOrigin method returns the origin of the given controller.
-
-#### GenerateControllerPointerOrigin/1
-
-  > `public override Transform GenerateControllerPointerOrigin(GameObject parent)`
-
- * Parameters
-   * `GameObject parent` - The GameObject that the origin will become parent of. If it is a controller then it will also be used to determine the hand if required.
- * Returns
-   * `Transform` - A generated Transform that contains the custom pointer origin.
-
-The GenerateControllerPointerOrigin method can create a custom pointer origin Transform to represent the pointer position and forward.
 
 #### GetControllerLeftHand/1
 
@@ -13063,6 +13330,17 @@ The GetHeadset method returns the Transform of the object that is used to repres
 
 The GetHeadsetCamera method returns the Transform of the object that is used to hold the headset camera in the scene.
 
+#### GetHeadsetType/0
+
+  > `public override string GetHeadsetType()`
+
+ * Parameters
+   * _none_
+ * Returns
+   * `string` - The string of the headset connected.
+
+The GetHeadsetType method returns a string representing the type of headset connected.
+
 #### GetHeadsetVelocity/0
 
   > `public override Vector3 GetHeadsetVelocity()`
@@ -13233,17 +13511,6 @@ The GetControllerByIndex method returns the GameObject of a controller with a sp
    * `Transform` - A Transform containing the origin of the controller.
 
 The GetControllerOrigin method returns the origin of the given controller.
-
-#### GenerateControllerPointerOrigin/1
-
-  > `public override Transform GenerateControllerPointerOrigin(GameObject parent)`
-
- * Parameters
-   * `GameObject parent` - The GameObject that the origin will become parent of. If it is a controller then it will also be used to determine the hand if required.
- * Returns
-   * `Transform` - A generated Transform that contains the custom pointer origin.
-
-The GenerateControllerPointerOrigin method can create a custom pointer origin Transform to represent the pointer position and forward.
 
 #### GetControllerLeftHand/1
 
@@ -13707,6 +13974,17 @@ The GetHeadset method returns the Transform of the object that is used to repres
 
 The GetHeadsetCamera/0 method returns the Transform of the object that is used to hold the headset camera in the scene.
 
+#### GetHeadsetType/0
+
+  > `public override string GetHeadsetType()`
+
+ * Parameters
+   * _none_
+ * Returns
+   * `string` - The string of the headset connected.
+
+The GetHeadsetType method returns a string representing the type of headset connected.
+
 #### GetHeadsetVelocity/0
 
   > `public override Vector3 GetHeadsetVelocity()`
@@ -13866,17 +14144,6 @@ The GetControllerByIndex method returns the GameObject of a controller with a sp
    * `Transform` - A Transform containing the origin of the controller.
 
 The GetControllerOrigin method returns the origin of the given controller.
-
-#### GenerateControllerPointerOrigin/1
-
-  > `public override Transform GenerateControllerPointerOrigin(GameObject parent)`
-
- * Parameters
-   * `GameObject parent` - The GameObject that the origin will become parent of. If it is a controller then it will also be used to determine the hand if required.
- * Returns
-   * `Transform` - A generated Transform that contains the custom pointer origin.
-
-The GenerateControllerPointerOrigin method can create a custom pointer origin Transform to represent the pointer position and forward.
 
 #### GetControllerLeftHand/1
 
@@ -14307,6 +14574,17 @@ The ProcessUpdate method enables an SDK to run logic for every Unity Update
 
 The ProcessFixedUpdate method enables an SDK to run logic for every Unity FixedUpdate
 
+#### GetHeadsetType/0
+
+  > `public override string GetHeadsetType()`
+
+ * Parameters
+   * _none_
+ * Returns
+   * `string` - The string of the headset connected.
+
+The GetHeadsetType method returns a string representing the type of headset connected.
+
 #### GetHeadsetVelocity/0
 
   > `public override Vector3 GetHeadsetVelocity()`
@@ -14488,17 +14766,6 @@ The GetControllerByIndex method returns the GameObject of a controller with a sp
    * `Transform` - A Transform containing the origin of the controller.
 
 The GetControllerOrigin method returns the origin of the given controller.
-
-#### GenerateControllerPointerOrigin/1
-
-  > `public override Transform GenerateControllerPointerOrigin(GameObject parent)`
-
- * Parameters
-   * _none_
- * Returns
-   * `Transform` - A generated Transform that contains the custom pointer origin.
-
-The GenerateControllerPointerOrigin method can create a custom pointer origin Transform to represent the pointer position and forward.
 
 #### GetControllerLeftHand/1
 
@@ -14951,6 +15218,17 @@ The GetHeadset method returns the Transform of the object that is used to repres
 
 The GetHeadsetCamera method returns the Transform of the object that is used to hold the headset camera in the scene.
 
+#### GetHeadsetType/0
+
+  > `public override string GetHeadsetType()`
+
+ * Parameters
+   * _none_
+ * Returns
+   * `string` - The string of the headset connected.
+
+The GetHeadsetType method returns a string representing the type of headset connected.
+
 #### GetHeadsetVelocity/0
 
   > `public override Vector3 GetHeadsetVelocity()`
@@ -15110,17 +15388,6 @@ The GetControllerByIndex method returns the GameObject of a controller with a sp
    * `Transform` - A Transform containing the origin of the controller.
 
 The GetControllerOrigin method returns the origin of the given controller.
-
-#### GenerateControllerPointerOrigin/1
-
-  > `public override Transform GenerateControllerPointerOrigin(GameObject parent)`
-
- * Parameters
-   * `GameObject parent` - The GameObject that the origin will become parent of. If it is a controller then it will also be used to determine the hand if required.
- * Returns
-   * `Transform` - A generated Transform that contains the custom pointer origin.
-
-The GenerateControllerPointerOrigin method can create a custom pointer origin Transform to represent the pointer position and forward.
 
 #### GetControllerLeftHand/1
 

@@ -149,6 +149,7 @@ namespace VRTK
         /// <returns>The ControllerType based on the SDK and headset being used.</returns>
         public override ControllerType GetCurrentControllerType(VRTK_ControllerReference controllerReference = null)
         {
+            SetTrackedControllerCaches();
             return cachedControllerType;
         }
 
@@ -230,6 +231,7 @@ namespace VRTK
         /// </summary>
         /// <param name="parent">The GameObject that the origin will become parent of. If it is a controller then it will also be used to determine the hand if required.</param>
         /// <returns>A generated Transform that contains the custom pointer origin.</returns>
+        [System.Obsolete("GenerateControllerPointerOrigin has been deprecated and will be removed in a future version of VRTK.")]
         public override Transform GenerateControllerPointerOrigin(GameObject parent)
         {
             return null;
@@ -527,8 +529,9 @@ namespace VRTK
             }
 
             bool isRightController = (controllerReference.hand == ControllerHand.Right);
-            KeyCode? touchButton = (isRightController ? rightControllerTouchKeyCodes[buttonType] : leftControllerTouchKeyCodes[buttonType]);
-            KeyCode? pressButton = (isRightController ? rightControllerPressKeyCodes[buttonType] : leftControllerPressKeyCodes[buttonType]);
+
+            KeyCode? touchButton = VRTK_SharedMethods.GetDictionaryValue((isRightController ? rightControllerTouchKeyCodes : leftControllerTouchKeyCodes), buttonType);
+            KeyCode? pressButton = VRTK_SharedMethods.GetDictionaryValue((isRightController ? rightControllerPressKeyCodes : leftControllerPressKeyCodes), buttonType);
 
             switch (buttonType)
             {
@@ -601,40 +604,29 @@ namespace VRTK
             return 0f;
         }
 
+        protected virtual bool IsAxisOnHandButtonPress(Dictionary<ButtonTypes, bool> axisHandState, ButtonTypes buttonType, ButtonPressTypes pressType, Vector2 axisValue)
+        {
+            bool previousAxisState = VRTK_SharedMethods.GetDictionaryValue(axisHandState, buttonType);
+            if (pressType == ButtonPressTypes.PressDown && !previousAxisState)
+            {
+                bool currentAxisState = GetAxisPressState(previousAxisState, axisValue.x);
+                VRTK_SharedMethods.AddDictionaryValue(axisHandState, buttonType, currentAxisState, true);
+                return currentAxisState;
+            }
+            if (pressType == ButtonPressTypes.PressUp && previousAxisState)
+            {
+                bool currentAxisState = GetAxisPressState(previousAxisState, axisValue.x);
+                VRTK_SharedMethods.AddDictionaryValue(axisHandState, buttonType, currentAxisState, true);
+                return !currentAxisState;
+            }
+            return false;
+        }
+
         protected virtual bool IsAxisButtonPress(VRTK_ControllerReference controllerReference, ButtonTypes buttonType, ButtonPressTypes pressType)
         {
             bool isRightController = (controllerReference.hand == ControllerHand.Right);
             Vector2 axisValue = GetButtonAxis(buttonType, controllerReference);
-
-            if (isRightController)
-            {
-                bool previousAxisState = rightAxisButtonPressState[buttonType];
-                if (pressType == ButtonPressTypes.PressDown && !previousAxisState)
-                {
-                    rightAxisButtonPressState[buttonType] = GetAxisPressState(rightAxisButtonPressState[buttonType], axisValue.x);
-                    return rightAxisButtonPressState[buttonType];
-                }
-                if (pressType == ButtonPressTypes.PressUp && previousAxisState)
-                {
-                    rightAxisButtonPressState[buttonType] = GetAxisPressState(rightAxisButtonPressState[buttonType], axisValue.x);
-                    return !rightAxisButtonPressState[buttonType];
-                }
-            }
-            else
-            {
-                bool previousAxisState = leftAxisButtonPressState[buttonType];
-                if (pressType == ButtonPressTypes.PressDown && !previousAxisState)
-                {
-                    leftAxisButtonPressState[buttonType] = GetAxisPressState(leftAxisButtonPressState[buttonType], axisValue.x);
-                    return leftAxisButtonPressState[buttonType];
-                }
-                if (pressType == ButtonPressTypes.PressUp && previousAxisState)
-                {
-                    leftAxisButtonPressState[buttonType] = GetAxisPressState(leftAxisButtonPressState[buttonType], axisValue.x);
-                    return !leftAxisButtonPressState[buttonType];
-                }
-            }
-            return false;
+            return IsAxisOnHandButtonPress((isRightController ? rightAxisButtonPressState : leftAxisButtonPressState), buttonType, pressType, axisValue);
         }
 
         protected virtual bool GetAxisPressState(bool currentState, float axisValue)
@@ -723,6 +715,19 @@ namespace VRTK
                 }
             }
 
+            //If the joystick isn't found then try and match on headset type
+            if (!joystickFound)
+            {
+                switch (VRTK_DeviceFinder.GetHeadsetType())
+                {
+                    case SDK_BaseHeadset.HeadsetType.GoogleDaydream:
+                        SetCachedControllerType("googledaydream");
+                        joystickFound = true;
+                        validJoystickIndex = 1;
+                        break;
+                }
+            }
+
             if (joystickFound)
             {
                 if (hand == ControllerHand.Right)
@@ -743,14 +748,23 @@ namespace VRTK
         protected virtual void SetCachedControllerType(string givenType)
         {
             givenType = givenType.ToLower();
+            //try direct matching
+            switch (givenType)
+            {
+                case "googledaydream":
+                    cachedControllerType = ControllerType.Daydream_Controller;
+                    return;
+            }
+
+            //fallback to fuzzy matching
             if (givenType.Contains("openvr controller"))
             {
-                switch (VRTK_DeviceFinder.GetHeadsetType(true))
+                switch (VRTK_DeviceFinder.GetHeadsetType())
                 {
-                    case SDK_BaseHeadset.Headsets.Vive:
+                    case SDK_BaseHeadset.HeadsetType.HTCVive:
                         cachedControllerType = ControllerType.SteamVR_ViveWand;
                         break;
-                    case SDK_BaseHeadset.Headsets.OculusRift:
+                    case SDK_BaseHeadset.HeadsetType.OculusRift:
                         cachedControllerType = ControllerType.SteamVR_OculusTouch;
                         break;
                 }
@@ -763,15 +777,15 @@ namespace VRTK
 
         protected virtual void SetControllerButtonValues(ref Dictionary<ButtonTypes, KeyCode?> touchKeyCodes, ref Dictionary<ButtonTypes, KeyCode?> pressKeyCodes, int joystickIndex, int[] touchCodes, int[] pressCodes)
         {
-            touchKeyCodes[ButtonTypes.Trigger] = StringToKeyCode(joystickIndex, touchCodes[0]);
-            touchKeyCodes[ButtonTypes.Touchpad] = StringToKeyCode(joystickIndex, touchCodes[1]);
-            touchKeyCodes[ButtonTypes.ButtonOne] = StringToKeyCode(joystickIndex, touchCodes[2]);
-            touchKeyCodes[ButtonTypes.ButtonTwo] = StringToKeyCode(joystickIndex, touchCodes[3]);
+            VRTK_SharedMethods.AddDictionaryValue(touchKeyCodes, ButtonTypes.Trigger, StringToKeyCode(joystickIndex, touchCodes[0]), true);
+            VRTK_SharedMethods.AddDictionaryValue(touchKeyCodes, ButtonTypes.Touchpad, StringToKeyCode(joystickIndex, touchCodes[1]), true);
+            VRTK_SharedMethods.AddDictionaryValue(touchKeyCodes, ButtonTypes.ButtonOne, StringToKeyCode(joystickIndex, touchCodes[2]), true);
+            VRTK_SharedMethods.AddDictionaryValue(touchKeyCodes, ButtonTypes.ButtonTwo, StringToKeyCode(joystickIndex, touchCodes[3]), true);
 
-            pressKeyCodes[ButtonTypes.Touchpad] = StringToKeyCode(joystickIndex, pressCodes[0]);
-            pressKeyCodes[ButtonTypes.ButtonOne] = StringToKeyCode(joystickIndex, pressCodes[1]);
-            pressKeyCodes[ButtonTypes.ButtonTwo] = StringToKeyCode(joystickIndex, pressCodes[2]);
-            pressKeyCodes[ButtonTypes.StartMenu] = StringToKeyCode(joystickIndex, pressCodes[3]);
+            VRTK_SharedMethods.AddDictionaryValue(pressKeyCodes, ButtonTypes.Touchpad, StringToKeyCode(joystickIndex, pressCodes[0]), true);
+            VRTK_SharedMethods.AddDictionaryValue(pressKeyCodes, ButtonTypes.ButtonOne, StringToKeyCode(joystickIndex, pressCodes[1]), true);
+            VRTK_SharedMethods.AddDictionaryValue(pressKeyCodes, ButtonTypes.ButtonTwo, StringToKeyCode(joystickIndex, pressCodes[2]), true);
+            VRTK_SharedMethods.AddDictionaryValue(pressKeyCodes, ButtonTypes.StartMenu, StringToKeyCode(joystickIndex, pressCodes[3]), true);
         }
 
         protected virtual KeyCode StringToKeyCode(int index, int code)

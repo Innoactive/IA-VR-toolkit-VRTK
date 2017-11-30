@@ -17,7 +17,7 @@ namespace VRTK
     ///    * Any other scene GameObject and provide a valid `VRTK_InteractableObject` component to the `Interactable Object` parameter of this script.
     /// </remarks>
     [AddComponentMenu("VRTK/Scripts/Interactions/Interactables/VRTK_ObjectTouchAutoInteract")]
-    public class VRTK_ObjectTouchAutoInteract : MonoBehaviour
+    public class VRTK_ObjectTouchAutoInteract : VRTK_InteractableListener
     {
         /// <summary>
         /// Situation when auto interaction can occur.
@@ -63,26 +63,58 @@ namespace VRTK
 
         protected float regrabTimer;
         protected float reuseTimer;
-        protected List<GameObject> touchers;
+        protected HashSet<GameObject> touchers = new HashSet<GameObject>();
 
         protected virtual void OnEnable()
         {
             regrabTimer = 0f;
             reuseTimer = 0f;
-            touchers = new List<GameObject>();
+            touchers.Clear();
+            EnableListeners();
+        }
 
-            interactableObject = (interactableObject != null ? interactableObject : GetComponent<VRTK_InteractableObject>());
+        protected virtual void OnDisable()
+        {
+            TearDownListeners();
+        }
 
+        protected virtual void Update()
+        {
+            if (interactableObject != null && (continuousGrabCheck || continuousUseCheck))
+            {
+                foreach (GameObject toucher in touchers)
+                {
+                    if (continuousGrabCheck)
+                    {
+                        CheckGrab(toucher);
+                    }
+                    if (continuousUseCheck)
+                    {
+                        CheckUse(toucher);
+                    }
+                }
+            }
+        }
+
+        protected override bool SetupListeners(bool throwError)
+        {
+            interactableObject = (interactableObject != null ? interactableObject : GetComponentInParent<VRTK_InteractableObject>());
             if (interactableObject != null)
             {
                 interactableObject.InteractableObjectTouched += InteractableObjectTouched;
                 interactableObject.InteractableObjectUntouched += InteractableObjectUntouched;
                 interactableObject.InteractableObjectUngrabbed += InteractableObjectUngrabbed;
                 interactableObject.InteractableObjectUnused += InteractableObjectUnused;
+                return true;
             }
+            else if (throwError)
+            {
+                VRTK_Logger.Error(VRTK_Logger.GetCommonMessage(VRTK_Logger.CommonMessageKeys.REQUIRED_COMPONENT_MISSING_FROM_GAMEOBJECT, "VRTK_ObjectTouchAutoInteract", "VRTK_InteractableObject", "the same or parent"));
+            }
+            return false;
         }
 
-        protected virtual void OnDisable()
+        protected override void TearDownListeners()
         {
             if (interactableObject != null)
             {
@@ -90,24 +122,6 @@ namespace VRTK
                 interactableObject.InteractableObjectUntouched -= InteractableObjectUntouched;
                 interactableObject.InteractableObjectUngrabbed -= InteractableObjectUngrabbed;
                 interactableObject.InteractableObjectUnused -= InteractableObjectUnused;
-            }
-        }
-
-        protected virtual void Update()
-        {
-            if (interactableObject != null && (continuousGrabCheck || continuousUseCheck))
-            {
-                for (int i = 0; i < touchers.Count; i++)
-                {
-                    if (continuousGrabCheck)
-                    {
-                        CheckGrab(touchers[i]);
-                    }
-                    if (continuousUseCheck)
-                    {
-                        CheckUse(touchers[i]);
-                    }
-                }
             }
         }
 
@@ -136,11 +150,11 @@ namespace VRTK
 
         protected virtual void ManageTouchers(GameObject interactingObject, bool add)
         {
-            if (add && !touchers.Contains(interactingObject))
+            if (add)
             {
                 touchers.Add(interactingObject);
             }
-            else if (!add && touchers.Contains(interactingObject))
+            else
             {
                 touchers.Remove(interactingObject);
             }

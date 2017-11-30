@@ -4,7 +4,6 @@ namespace VRTK
     using UnityEngine;
     using System.Collections;
     using System.Collections.Generic;
-    using Highlighters;
     using GrabAttachMechanics;
     using SecondaryControllerGrabActions;
 
@@ -35,7 +34,6 @@ namespace VRTK
     ///  * `Rigidbody` - A Unity Rigidbody to allow the GameObject to be affected by the Unity Physics System (not required for Climbable Grab Attach Types).
     ///  * `VRTK_BaseGrabAttach` - A Grab Attach mechanic for determining how the Interactable Object is grabbed by the primary interacting object.
     ///  * `VRTK_BaseGrabAction` - A Grab Action mechanic for determining how to manipulate the Interactable Object when grabbed by the secondary interacting object.
-    ///  * `VRTK_BaseHighlighter` - The highlighter to use when highligting the Interactable Object. If one is not already injected in the `Object Highlighter` parameter then the component on the same GameObject will be used.
     ///
     /// **Script Usage:**
     ///  * Place the `VRTK_InteractableObject` script onto the GameObject that is to be interactable.
@@ -155,17 +153,16 @@ namespace VRTK
         [Tooltip("Determines which controller can initiate a near touch action.")]
         public AllowedController allowedNearTouchControllers = AllowedController.Both;
 
-        [System.Obsolete("`VRTK_InteractableObject.touchHighlightColor` has been replaced with `VRTK_InteractObjectHighlighter.touchHighlight`. This parameter will be removed in a future version of VRTK.")]
-        [Tooltip("The Color to highlight the object when it is touched.")]
-        [HideInInspector]
-        public Color touchHighlightColor = Color.clear;
-
         [Header("Touch Settings")]
 
         [Tooltip("Determines which controller can initiate a touch action.")]
         public AllowedController allowedTouchControllers = AllowedController.Both;
         [Tooltip("An array of colliders on the GameObject to ignore when being touched.")]
         public Collider[] ignoredColliders;
+
+        [System.Obsolete("`VRTK_InteractableObject.touchHighlightColor` has been replaced with `VRTK_InteractObjectHighlighter.touchHighlight`. This parameter will be removed in a future version of VRTK.")]
+        [ObsoleteInspector]
+        public Color touchHighlightColor = Color.clear;
 
         [Header("Grab Settings")]
 
@@ -203,8 +200,31 @@ namespace VRTK
 
         [Header("Custom Settings")]
 
-        [Tooltip("An optional Highlighter to use when highlighting this Interactable Object. If this is left blank, then the first active highlighter on the same GameObject will be used, if one isn't found then a Material Color Swap Highlighter will be created at runtime.")]
-        public VRTK_BaseHighlighter objectHighlighter;
+        [System.Obsolete("`VRTK_InteractableObject.objectHighlighter` has been replaced with `VRTK_InteractObjectHighlighter.objectHighlighter`. This parameter will be removed in a future version of VRTK.")]
+        [ObsoleteInspector]
+        public Highlighters.VRTK_BaseHighlighter objectHighlighter;
+
+        protected Rigidbody interactableRigidbody;
+        protected HashSet<GameObject> currentIgnoredColliders = new HashSet<GameObject>();
+        protected HashSet<GameObject> hoveredSnapObjects = new HashSet<GameObject>();
+        protected HashSet<GameObject> nearTouchingObjects = new HashSet<GameObject>();
+        protected HashSet<GameObject> touchingObjects = new HashSet<GameObject>();
+        protected List<GameObject> grabbingObjects = new List<GameObject>();
+        protected VRTK_InteractUse usingObject = null;
+        protected Transform trackPoint;
+        protected bool customTrackPoint = false;
+        protected Transform primaryControllerAttachPoint;
+        protected Transform secondaryControllerAttachPoint;
+        protected Transform previousParent;
+        protected bool previousKinematicState;
+        protected bool previousIsGrabbable;
+        protected bool forcedDropped;
+        protected bool forceDisabled;
+        protected bool hoveredOverSnapDropZone = false;
+        protected bool snappedInSnapDropZone = false;
+        protected VRTK_SnapDropZone storedSnapDropZone;
+        protected Vector3 previousLocalScale = Vector3.zero;
+        protected bool startDisabled = false;
 
         /// <summary>
         /// Emitted when the Interactable Object script is enabled;
@@ -290,30 +310,6 @@ namespace VRTK
                 }
             }
         }
-
-        protected Rigidbody interactableRigidbody;
-        protected List<GameObject> nearTouchingObjects = new List<GameObject>();
-        protected List<GameObject> touchingObjects = new List<GameObject>();
-        protected List<GameObject> grabbingObjects = new List<GameObject>();
-        protected List<GameObject> hoveredSnapObjects = new List<GameObject>();
-        protected VRTK_InteractUse usingObject = null;
-        protected Transform trackPoint;
-        protected bool customTrackPoint = false;
-        protected Transform primaryControllerAttachPoint;
-        protected Transform secondaryControllerAttachPoint;
-        protected Transform previousParent;
-        protected bool previousKinematicState;
-        protected bool previousIsGrabbable;
-        protected bool forcedDropped;
-        protected bool forceDisabled;
-        protected bool autoHighlighter = false;
-        protected bool hoveredOverSnapDropZone = false;
-        protected bool snappedInSnapDropZone = false;
-        protected VRTK_SnapDropZone storedSnapDropZone;
-        protected Vector3 previousLocalScale = Vector3.zero;
-        protected List<GameObject> currentIgnoredColliders = new List<GameObject>();
-        protected bool startDisabled = false;
-        protected VRTK_BaseHighlighter baseHighlighter;
 
         public virtual void OnInteractableObjectEnabled(InteractableObjectEventArgs e)
         {
@@ -489,10 +485,9 @@ namespace VRTK
             GameObject currentNearTouchingGameObject = (currentNearTouchingObject != null ? currentNearTouchingObject.gameObject : null);
             if (currentNearTouchingGameObject != null)
             {
-                if (!nearTouchingObjects.Contains(currentNearTouchingGameObject))
+                if (nearTouchingObjects.Add(currentNearTouchingGameObject))
                 {
                     ToggleEnableState(true);
-                    nearTouchingObjects.Add(currentNearTouchingGameObject);
                     OnInteractableObjectNearTouched(SetInteractableObjectEvent(currentNearTouchingGameObject));
                 }
             }
@@ -505,10 +500,9 @@ namespace VRTK
         public virtual void StopNearTouching(VRTK_InteractNearTouch previousNearTouchingObject = null)
         {
             GameObject previousNearTouchingGameObject = (previousNearTouchingObject != null ? previousNearTouchingObject.gameObject : null);
-            if (previousNearTouchingGameObject != null && nearTouchingObjects.Contains(previousNearTouchingGameObject))
+            if (previousNearTouchingGameObject != null && nearTouchingObjects.Remove(previousNearTouchingGameObject))
             {
                 OnInteractableObjectNearUntouched(SetInteractableObjectEvent(previousNearTouchingGameObject));
-                nearTouchingObjects.Remove(previousNearTouchingGameObject);
             }
         }
 
@@ -522,10 +516,9 @@ namespace VRTK
             if (currentTouchingGameObject != null)
             {
                 IgnoreColliders(currentTouchingGameObject);
-                if (!touchingObjects.Contains(currentTouchingGameObject))
+                if (touchingObjects.Add(currentTouchingGameObject))
                 {
                     ToggleEnableState(true);
-                    touchingObjects.Add(currentTouchingGameObject);
                     OnInteractableObjectTouched(SetInteractableObjectEvent(currentTouchingGameObject));
                 }
             }
@@ -538,11 +531,10 @@ namespace VRTK
         public virtual void StopTouching(VRTK_InteractTouch previousTouchingObject = null)
         {
             GameObject previousTouchingGameObject = (previousTouchingObject != null ? previousTouchingObject.gameObject : null);
-            if (previousTouchingGameObject != null && touchingObjects.Contains(previousTouchingGameObject))
+            if (previousTouchingGameObject != null && touchingObjects.Remove(previousTouchingGameObject))
             {
                 ResetUseState(previousTouchingGameObject);
                 OnInteractableObjectUntouched(SetInteractableObjectEvent(previousTouchingGameObject));
-                touchingObjects.Remove(previousTouchingGameObject);
             }
         }
 
@@ -639,38 +631,39 @@ namespace VRTK
         /// The Highlight method turns on the highlighter attached to the Interactable Object with the given Color.
         /// </summary>
         /// <param name="highlightColor">The colour to apply to the highlighter.</param>
+        [System.Obsolete("`VRTK_InteractableObject.Highlight` has been replaced with `VRTK_InteractObjectHighlighter.Highlight`. This method will be removed in a future version of VRTK.")]
         public virtual void Highlight(Color highlightColor)
         {
-            InitialiseHighlighter(highlightColor);
-            if (baseHighlighter != null && highlightColor != Color.clear)
+            VRTK_InteractObjectHighlighter interactObjectHighlighter = GetComponentInChildren<VRTK_InteractObjectHighlighter>();
+            if(interactObjectHighlighter != null)
             {
-                baseHighlighter.Highlight(highlightColor);
-            }
-            else
-            {
-                Unhighlight();
+                interactObjectHighlighter.Highlight(highlightColor);
             }
         }
 
         /// <summary>
         /// The Unhighlight method turns off the highlighter attached to the Interactable Object.
         /// </summary>
+        [System.Obsolete("`VRTK_InteractableObject.Unhighlight` has been replaced with `VRTK_InteractObjectHighlighter.Unhighlight`. This method will be removed in a future version of VRTK.")]
         public virtual void Unhighlight()
         {
-            if (baseHighlighter != null)
+            VRTK_InteractObjectHighlighter interactObjectHighlighter = GetComponentInChildren<VRTK_InteractObjectHighlighter>();
+            if (interactObjectHighlighter != null)
             {
-                baseHighlighter.Unhighlight();
+                interactObjectHighlighter.Unhighlight();
             }
         }
 
         /// <summary>
         /// The ResetHighlighter method is used to reset the currently attached highlighter.
         /// </summary>
+        [System.Obsolete("`VRTK_InteractableObject.ResetHighlighter` has been replaced with `VRTK_InteractObjectHighlighter.ResetHighlighter`. This method will be removed in a future version of VRTK.")]
         public virtual void ResetHighlighter()
         {
-            if (baseHighlighter != null)
+            VRTK_InteractObjectHighlighter interactObjectHighlighter = GetComponentInChildren<VRTK_InteractObjectHighlighter>();
+            if (interactObjectHighlighter != null)
             {
-                baseHighlighter.ResetHighlighter();
+                interactObjectHighlighter.ResetHighlighter();
             }
         }
 
@@ -729,7 +722,7 @@ namespace VRTK
         /// <returns>A list of GameObject of that are currently nearly touching the current Interactable Object.</returns>
         public virtual List<GameObject> GetNearTouchingObjects()
         {
-            return nearTouchingObjects;
+            return new List<GameObject>(nearTouchingObjects);
         }
 
         /// <summary>
@@ -738,7 +731,7 @@ namespace VRTK
         /// <returns>A list of GameObject of that are currently touching the current Interactable Object.</returns>
         public virtual List<GameObject> GetTouchingObjects()
         {
-            return touchingObjects;
+            return new List<GameObject>(touchingObjects);
         }
 
         /// <summary>
@@ -895,17 +888,15 @@ namespace VRTK
         {
             if (state)
             {
-                if (!hoveredSnapObjects.Contains(snapDropZone.gameObject))
+                if (hoveredSnapObjects.Add(snapDropZone.gameObject))
                 {
-                    hoveredSnapObjects.Add(snapDropZone.gameObject);
                     OnInteractableObjectEnteredSnapDropZone(SetInteractableObjectEvent(snapDropZone.gameObject));
                 }
             }
             else
             {
-                if (hoveredSnapObjects.Contains(snapDropZone.gameObject))
+                if (hoveredSnapObjects.Remove(snapDropZone.gameObject))
                 {
-                    hoveredSnapObjects.Remove(snapDropZone.gameObject);
                     OnInteractableObjectExitedSnapDropZone(SetInteractableObjectEvent(snapDropZone.gameObject));
                 }
             }
@@ -972,11 +963,11 @@ namespace VRTK
         public virtual void ResetIgnoredColliders()
         {
             //Go through all the existing set up ignored colliders and reset their collision state
-            for (int x = 0; x < currentIgnoredColliders.Count; x++)
+            foreach (GameObject currentIgnoredCollider in currentIgnoredColliders)
             {
-                if (currentIgnoredColliders[x] != null)
+                if (currentIgnoredCollider != null)
                 {
-                    Collider[] touchingColliders = currentIgnoredColliders[x].GetComponentsInChildren<Collider>();
+                    Collider[] touchingColliders = currentIgnoredCollider.GetComponentsInChildren<Collider>();
                     if (ignoredColliders != null)
                     {
                         for (int i = 0; i < ignoredColliders.Length; i++)
@@ -1050,16 +1041,13 @@ namespace VRTK
             {
                 VRTK_InteractObjectHighlighter autoGenInteractHighlighter = gameObject.AddComponent<VRTK_InteractObjectHighlighter>();
                 autoGenInteractHighlighter.touchHighlight = touchHighlightColor;
+                autoGenInteractHighlighter.objectHighlighter = (objectHighlighter == null ? Highlighters.VRTK_BaseHighlighter.GetActiveHighlighter(gameObject) : objectHighlighter);
             }
 #pragma warning restore 0618
         }
 
         protected virtual void OnEnable()
         {
-            if (GetValidHighlighter() != baseHighlighter)
-            {
-                baseHighlighter = null;
-            }
             RegisterTeleporters();
             forceDisabled = false;
             if (forcedDropped)
@@ -1074,12 +1062,6 @@ namespace VRTK
         protected virtual void OnDisable()
         {
             UnregisterTeleporters();
-
-            if (autoHighlighter)
-            {
-                Destroy(baseHighlighter);
-            }
-
             if (!startDisabled)
             {
                 forceDisabled = true;
@@ -1153,26 +1135,6 @@ namespace VRTK
             }
         }
 
-        protected virtual void InitialiseHighlighter(Color highlightColor)
-        {
-            if (baseHighlighter == null && highlightColor != Color.clear)
-            {
-                autoHighlighter = false;
-                baseHighlighter = GetValidHighlighter();
-                if (baseHighlighter == null)
-                {
-                    autoHighlighter = true;
-                    baseHighlighter = gameObject.AddComponent<VRTK_MaterialColorSwapHighlighter>();
-                }
-                baseHighlighter.Initialise(highlightColor, gameObject);
-            }
-        }
-
-        protected virtual VRTK_BaseHighlighter GetValidHighlighter()
-        {
-            return (objectHighlighter != null ? objectHighlighter : VRTK_BaseHighlighter.GetActiveHighlighter(gameObject));
-        }
-
         protected virtual void IgnoreColliders(GameObject touchingObject)
         {
             if (ignoredColliders != null && !currentIgnoredColliders.Contains(touchingObject))
@@ -1241,7 +1203,7 @@ namespace VRTK
             }
             ForceReleaseGrab();
             RemoveTrackPoint();
-            grabbingObjects.Add(currentGrabbingObject);
+            VRTK_SharedMethods.AddListValue(grabbingObjects, currentGrabbingObject, true);
             SetTrackPoint(currentGrabbingObject);
             if (!IsSwappable())
             {
@@ -1252,9 +1214,8 @@ namespace VRTK
 
         protected virtual void SecondaryControllerGrab(GameObject currentGrabbingObject)
         {
-            if (!grabbingObjects.Contains(currentGrabbingObject))
+            if (VRTK_SharedMethods.AddListValue(grabbingObjects, currentGrabbingObject, true))
             {
-                grabbingObjects.Add(currentGrabbingObject);
                 secondaryControllerAttachPoint = CreateAttachPoint(currentGrabbingObject.name, "Secondary", currentGrabbingObject.transform);
 
                 if (secondaryGrabActionScript != null)
@@ -1280,9 +1241,8 @@ namespace VRTK
 
         protected virtual void SecondaryControllerUngrab(GameObject previousGrabbingObject)
         {
-            if (grabbingObjects.Contains(previousGrabbingObject))
+            if (grabbingObjects.Remove(previousGrabbingObject))
             {
-                grabbingObjects.Remove(previousGrabbingObject);
                 Destroy(secondaryControllerAttachPoint.gameObject);
                 secondaryControllerAttachPoint = null;
                 if (secondaryGrabActionScript != null)
@@ -1415,10 +1375,8 @@ namespace VRTK
 
         protected virtual void StopTouchingInteractions()
         {
-            for (int i = 0; i < touchingObjects.Count; i++)
+            foreach (GameObject touchingObject in touchingObjects)
             {
-                GameObject touchingObject = touchingObjects[i];
-
                 if (touchingObject.activeInHierarchy || forceDisabled)
                 {
                     touchingObject.GetComponentInChildren<VRTK_InteractTouch>().ForceStopTouching();
