@@ -278,7 +278,6 @@
                 }
             }
 
-            // only update if focused
             if (isHand)
             {
                 UpdateHands();
