@@ -27,6 +27,8 @@ namespace VRTK
         protected const string RIGHT_HAND_CONTROLLER_NAME = "RightHand";
         protected const string LEFT_HAND_CONTROLLER_NAME = "LeftHand";
 
+        private Vector2 lastKnownMousePosition = Vector2.negativeInfinity;
+
         public virtual void SetKeyMappings(Dictionary<string, KeyCode> givenKeyMappings)
         {
             keyMappings = givenKeyMappings;
@@ -392,6 +394,32 @@ namespace VRTK
         /// <returns>A Vector2 of the X/Y values of the button axis. If no axis values exist for the given button, then a Vector2.Zero is returned.</returns>
         public override Vector2 GetButtonAxis(ButtonTypes buttonType, VRTK_ControllerReference controllerReference)
         {
+            if (GetControllerButtonState(ButtonTypes.TouchpadTwo, ButtonPressTypes.Touch, controllerReference) ||
+                GetControllerButtonState(ButtonTypes.Touchpad, ButtonPressTypes.Touch, controllerReference))
+            {
+                // map the mouse position to 0...1, see https://docs.unity3d.com/ScriptReference/Input-mousePosition.html
+                // we also need to check whether the cursor is currently locked (i.e. sticky at the center of the screen) or free
+                float mouseX, mouseY;
+                const float speedMultiplier = 5;
+                if (Cursor.lockState == CursorLockMode.Locked)
+                {
+                    // initial case
+                    if (float.IsNegativeInfinity(lastKnownMousePosition.x))
+                    {
+                        lastKnownMousePosition = Input.mousePosition;
+                    }
+                    // manually calculate the absolute mouse position relative to the screen center
+                    lastKnownMousePosition += new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
+                    mouseX = lastKnownMousePosition.x;
+                    mouseY = lastKnownMousePosition.y;
+                }
+                else
+                {
+                    mouseX = Input.mousePosition.x;
+                    mouseY = Input.mousePosition.y;
+                }
+                return new Vector2((mouseX - (float)Screen.width / 2) * speedMultiplier / Screen.width, (mouseY - (float)Screen.height / 2) * speedMultiplier / (float)Screen.height);
+            }
             return Vector2.zero;
         }
 
