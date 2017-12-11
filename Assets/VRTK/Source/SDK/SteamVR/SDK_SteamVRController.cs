@@ -141,6 +141,7 @@ namespace VRTK
         public override string GetControllerElementPath(ControllerElements element, ControllerHand hand, bool fullPath = false)
         {
             string suffix = (fullPath ? "/attach" : "");
+
             switch (element)
             {
                 case ControllerElements.AttachPoint:
@@ -153,6 +154,8 @@ namespace VRTK
                     return GetControllerGripPath(hand, suffix, ControllerHand.Right);
                 case ControllerElements.Touchpad:
                     return GetControllerTouchpadPath(hand, suffix);
+                case ControllerElements.TouchpadTwo:
+                    return GetControllerTouchpadTwoPath(hand, suffix);
                 case ControllerElements.ButtonOne:
                     return GetControllerButtonOnePath(hand, suffix);
                 case ControllerElements.ButtonTwo:
@@ -794,6 +797,16 @@ namespace VRTK
                 case ControllerType.SteamVR_WindowsMRController:
                     return "trackpad" + suffix;
                 case ControllerType.SteamVR_OculusTouch:
+                    return "thumbstick" + suffix;
+            }
+            return null;
+        }
+
+        protected virtual string GetControllerTouchpadTwoPath(ControllerHand hand, string suffix)
+        {
+            switch (GetCurrentControllerType())
+            {
+                case ControllerType.SteamVR_WindowsMRController:
                     return "thumbstick" + suffix;
             }
             return null;
