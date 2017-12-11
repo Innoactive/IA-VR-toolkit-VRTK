@@ -131,6 +131,10 @@ namespace VRTK
             /// </summary>
             Touchpad,
             /// <summary>
+            /// The touch pad/stick.
+            /// </summary>
+            TouchpadTwo,
+            /// <summary>
             /// The first generic button.
             /// </summary>
             ButtonOne,
