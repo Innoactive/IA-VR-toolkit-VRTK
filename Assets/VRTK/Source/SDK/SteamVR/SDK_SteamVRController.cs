@@ -29,7 +29,7 @@ namespace VRTK
         protected SteamVR_TrackedObject cachedRightTrackedObject;
         protected Dictionary<GameObject, SteamVR_TrackedObject> cachedTrackedObjectsByGameObject = new Dictionary<GameObject, SteamVR_TrackedObject>();
         protected Dictionary<uint, SteamVR_TrackedObject> cachedTrackedObjectsByIndex = new Dictionary<uint, SteamVR_TrackedObject>();
-        protected Dictionary<EVRButtonId, bool> axisTouchStates = new Dictionary<EVRButtonId, bool>();
+        protected Dictionary<uint, Dictionary<EVRButtonId, bool>> axisTouchStates = new Dictionary<uint, Dictionary<EVRButtonId, bool>>();
         protected Dictionary<EVRButtonId, float> axisTouchFidelity = new Dictionary<EVRButtonId, float>() { { EVRButtonId.k_EButton_SteamVR_Touchpad, 0f }, { EVRButtonId.k_EButton_Axis2, 0.25f } };
         protected ushort maxHapticVibration = 3999;
 
@@ -744,10 +744,16 @@ namespace VRTK
             {
                 return false;
             }
+
+            if (VRTK_SharedMethods.GetDictionaryValue(axisTouchStates, index) == null)
+            {
+                VRTK_SharedMethods.AddDictionaryValue(axisTouchStates, index, new Dictionary<EVRButtonId, bool>() { { axisId, false } }, true);
+            }
+
             SteamVR_Controller.Device device = SteamVR_Controller.Input((int)index);
             Vector2 axisValue = device.GetAxis(axisId);
 
-            bool currentAxisPressState = VRTK_SharedMethods.GetDictionaryValue(axisTouchStates, axisId, false, true);
+            bool currentAxisPressState = VRTK_SharedMethods.GetDictionaryValue(VRTK_SharedMethods.GetDictionaryValue(axisTouchStates, index), axisId, false, true);
             float axisFidelity = VRTK_SharedMethods.GetDictionaryValue(axisTouchFidelity, axisId);
 
             switch (type)
@@ -757,14 +763,14 @@ namespace VRTK
                 case ButtonPressTypes.TouchDown:
                     if (!currentAxisPressState && !VRTK_SharedMethods.Vector3ShallowCompare(axisValue, Vector2.zero, axisFidelity))
                     {
-                        VRTK_SharedMethods.AddDictionaryValue(axisTouchStates, axisId, true, true);
+                        VRTK_SharedMethods.AddDictionaryValue(VRTK_SharedMethods.GetDictionaryValue(axisTouchStates, index), axisId, true, true);
                         return true;
                     }
                     return false;
                 case ButtonPressTypes.TouchUp:
                     if (currentAxisPressState && VRTK_SharedMethods.Vector3ShallowCompare(axisValue, Vector2.zero, axisFidelity))
                     {
-                        VRTK_SharedMethods.AddDictionaryValue(axisTouchStates, axisId, false, true);
+                        VRTK_SharedMethods.AddDictionaryValue(VRTK_SharedMethods.GetDictionaryValue(axisTouchStates, index), axisId, false, true);
                         return true;
                     }
                     return false;
