@@ -63,6 +63,21 @@ namespace VRTK
         }
 
         /// <summary>
+        /// This method is called just after unloading the VRTK_SDKSetup that's using this SDK.
+        /// </summary>
+        /// <param name="setup">The SDK Setup which is using this SDK.</param>
+        public override void OnAfterSetupUnload(VRTK_SDKSetup setup)
+        {
+            base.OnAfterSetupUnload(setup);
+
+            if(setup != null)
+            {
+                cachedLeftController = null;
+                cachedRightController = null;
+            }
+        }
+
+        /// <summary>
         /// The ProcessUpdate method enables an SDK to run logic for every Unity Update
         /// </summary>
         /// <param name="controllerReference">The reference for the controller.</param>
