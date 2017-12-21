@@ -279,7 +279,14 @@ namespace VRTK
                         renderer.material.renderQueue = -1;
                     }
 
-                    if (renderer.material.HasProperty("_Color"))
+                    if (VRTK_SDKManager.instance.loadedSetup.systemSDKInfo.type == typeof(SDK_OculusSystem))
+                    {
+                        if (renderer.material.HasProperty("_Alpha"))
+                        {
+                            renderer.material.SetFloat("_Alpha", alpha);
+                        }
+                    }
+                    else if (renderer.material.HasProperty("_Color"))
                     {
                         renderer.material.color = new Color(renderer.material.color.r, renderer.material.color.g, renderer.material.color.b, alpha);
                     }
