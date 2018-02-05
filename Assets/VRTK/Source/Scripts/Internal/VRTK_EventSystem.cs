@@ -67,7 +67,7 @@
 
             foreach (PropertyInfo propertyInfo in EVENT_SYSTEM_PROPERTY_INFOS)
             {
-                if (propertyInfo.CanWrite)
+                if (propertyInfo.CanWrite && propertyInfo.CanRead)
                 {
                     propertyInfo.SetValue(toEventSystem, propertyInfo.GetValue(fromEventSystem, null), null);
                 }
