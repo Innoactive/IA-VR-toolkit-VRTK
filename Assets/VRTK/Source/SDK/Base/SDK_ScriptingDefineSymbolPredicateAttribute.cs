@@ -47,12 +47,12 @@ namespace VRTK
         {
             if (symbol == null)
             {
-                VRTK_Logger.Fatal(new ArgumentNullException("symbol"));
+                //VRTK_Logger.Fatal(new ArgumentNullException("symbol"));
                 return;
             }
             if (symbol == string.Empty)
             {
-                VRTK_Logger.Fatal(new ArgumentOutOfRangeException("symbol", symbol, "An empty string isn't allowed."));
+                //VRTK_Logger.Fatal(new ArgumentOutOfRangeException("symbol", symbol, "An empty string isn't allowed."));
                 return;
             }
 
@@ -60,12 +60,12 @@ namespace VRTK
 
             if (buildTargetGroupName == null)
             {
-                VRTK_Logger.Fatal(new ArgumentNullException("buildTargetGroupName"));
+                //VRTK_Logger.Fatal(new ArgumentNullException("buildTargetGroupName"));
                 return;
             }
             if (buildTargetGroupName == string.Empty)
             {
-                VRTK_Logger.Fatal(new ArgumentOutOfRangeException("buildTargetGroupName", buildTargetGroupName, "An empty string isn't allowed."));
+                //VRTK_Logger.Fatal(new ArgumentOutOfRangeException("buildTargetGroupName", buildTargetGroupName, "An empty string isn't allowed."));
                 return;
             }
 
@@ -103,13 +103,13 @@ namespace VRTK
             }
             catch (Exception exception)
             {
-                VRTK_Logger.Fatal(new ArgumentOutOfRangeException(string.Format("'{0}' isn't a valid constant name of '{1}'.", groupName, buildTargetGroupType.Name), exception));
+                //VRTK_Logger.Fatal(new ArgumentOutOfRangeException(string.Format("'{0}' isn't a valid constant name of '{1}'.", groupName, buildTargetGroupType.Name), exception));
                 return;
             }
 
             if (buildTargetGroup == BuildTargetGroup.Unknown)
             {
-                VRTK_Logger.Fatal(new ArgumentOutOfRangeException("groupName", groupName, string.Format("'{0}' isn't allowed.", groupName)));
+                //VRTK_Logger.Fatal(new ArgumentOutOfRangeException("groupName", groupName, string.Format("'{0}' isn't allowed.", groupName)));
                 return;
             }
 #endif
