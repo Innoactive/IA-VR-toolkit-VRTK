@@ -27,7 +27,12 @@ namespace VRTK
         protected const string RIGHT_HAND_CONTROLLER_NAME = "RightHand";
         protected const string LEFT_HAND_CONTROLLER_NAME = "LeftHand";
 
-        private Vector2 lastKnownMousePosition = Vector2.negativeInfinity;
+        private Vector2 lastKnownMousePosition =
+#if UNITY_2017
+            Vector2.negativeInfinity;
+#else
+            new Vector2(float.NegativeInfinity, float.NegativeInfinity);
+#endif
 
         public virtual void SetKeyMappings(Dictionary<string, KeyCode> givenKeyMappings)
         {
