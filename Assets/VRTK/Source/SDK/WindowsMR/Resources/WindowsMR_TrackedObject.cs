@@ -71,6 +71,12 @@
             //     Whether or not the thumbstick is pressed.
             //     ///
             public bool ThumbstickPressed { get; set; }
+            //
+            // Summary:
+            //     ///
+            //     Whether or not the thumbstick is touched. Meaning the axis is not at origin (plus a threshold).
+            //     ///
+            public bool ThumbstickTouched { get; set; }
         }
 
         [SerializeField]
@@ -81,16 +87,19 @@
         public InteractionSourceHandedness Handedness { get { return handedness; } }
         public uint Index { get { return index; } }
 
+        private bool isDetected;
+
         private uint index = uint.MaxValue;
         private ButtonState currentButtonState;
         private ButtonState prevButtonState;
+
         private Vector3 angularVelocity;
+        private float thumbstickAxisFidelity = 0.25f;
 
         private float hairTriggerDelta = 0.1f; // amount trigger must be pulled or released to change state
         private float hairTriggerLimit;
         private bool hairTriggerState;
         private bool hairTriggerPrevState;
-        private bool isDetected;
 
         public float GetPressAmount(InteractionSourcePressType button)
         {
@@ -162,6 +171,8 @@
             {
                 case InteractionSourcePressType.Touchpad:
                     return currentButtonState.TouchpadTouched;
+                case InteractionSourcePressType.Thumbstick:
+                    return currentButtonState.ThumbstickTouched;
             }
             return false;
         }
@@ -172,6 +183,8 @@
             {
                 case InteractionSourcePressType.Touchpad:
                     return (prevButtonState.TouchpadTouched == false && currentButtonState.TouchpadTouched == true);
+                case InteractionSourcePressType.Thumbstick:
+                    return (prevButtonState.ThumbstickTouched == false && currentButtonState.ThumbstickTouched == true);
             }
             return false;
         }
@@ -182,6 +195,8 @@
             {
                 case InteractionSourcePressType.Touchpad:
                     return (prevButtonState.TouchpadTouched == true && currentButtonState.TouchpadTouched == false);
+                case InteractionSourcePressType.Thumbstick:
+                    return (prevButtonState.ThumbstickTouched == true && currentButtonState.ThumbstickTouched == false);
             }
             return false;
         }
@@ -283,7 +298,7 @@
             InteractionManager.InteractionSourceUpdated += InteractionManager_InteractionSourceUpdated;
             InteractionManager.InteractionSourcePressed += InteractionManager_InteractionSourcePressed;
             InteractionManager.InteractionSourceReleased += InteractionManager_InteractionSourceReleased;
-
+            
 #if VRTK_DEFINE_WINDOWSMR_CONTROLLER_VISUALIZATION
             MotionControllerVisualizer.Instance.OnControllerModelLoaded += AttachControllerModel;
 #endif
@@ -441,6 +456,7 @@
                     break;
                 case InteractionSourcePressType.Thumbstick:
                     prevButtonState.ThumbstickPressed = currentButtonState.ThumbstickPressed;
+                    prevButtonState.ThumbstickTouched = currentButtonState.ThumbstickTouched;
                     break;
             }
         }
@@ -477,6 +493,8 @@
             if (source.supportsThumbstick)
             {
                 currentButtonState.ThumbstickPosition = state.thumbstickPosition;
+                prevButtonState.ThumbstickTouched = currentButtonState.ThumbstickTouched;
+                currentButtonState.ThumbstickTouched = CheckThumbstickTouch();
             }
         }
 
@@ -506,6 +524,12 @@
             }
 
             hairTriggerLimit = hairTriggerState ? Mathf.Max(hairTriggerLimit, value) : Mathf.Min(hairTriggerLimit, value);
+        }
+
+        private bool CheckThumbstickTouch()
+        {
+            Vector3 axisValue = GetAxis(InteractionSourcePressType.Thumbstick);
+            return (!currentButtonState.ThumbstickPressed && !VRTK_SharedMethods.Vector3ShallowCompare(axisValue, Vector3.zero, thumbstickAxisFidelity));
         }
 #endif
     }
