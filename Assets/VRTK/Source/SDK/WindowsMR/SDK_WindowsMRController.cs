@@ -359,7 +359,7 @@ namespace VRTK
         public override SDK_ControllerHapticModifiers GetHapticModifiers()
         {
             SDK_ControllerHapticModifiers modifiers = new SDK_ControllerHapticModifiers();
-            modifiers.durationModifier = 0.4f;
+            modifiers.durationModifier = 0.1f;
             return modifiers;
         }
 
@@ -370,8 +370,14 @@ namespace VRTK
         /// <returns>A Vector3 containing the current velocity of the tracked object.</returns>
         public override Vector3 GetVelocity(VRTK_ControllerReference controllerReference)
         {
-            // TODO: Implement
-            return Vector3.zero;
+            if (!VRTK_ControllerReference.IsValid(controllerReference))
+            {
+                return Vector3.zero;
+            }
+
+            uint index = VRTK_ControllerReference.GetRealIndex(controllerReference);
+            WindowsMR_TrackedObject device = GetControllerByIndex(index).transform.parent.GetComponent<WindowsMR_TrackedObject>();
+            return device.Velocity;
         }
 
         /// <summary>
@@ -385,7 +391,9 @@ namespace VRTK
             WindowsMR_TrackedObject device = GetControllerByIndex(index).transform.parent.GetComponent<WindowsMR_TrackedObject>();
             if (device != null)
             {
-                device.StartHaptics(1f, 1f);
+                float duration = GetHapticModifiers().durationModifier;
+                float intensity = 0.5f;
+                device.StartHaptics(intensity, duration);
             }
         }
 

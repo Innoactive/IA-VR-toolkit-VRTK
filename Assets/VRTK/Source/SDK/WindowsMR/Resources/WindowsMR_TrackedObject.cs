@@ -83,6 +83,7 @@
         [Tooltip("Defines the controllers hand.")]
         private InteractionSourceHandedness handedness;
 
+        public Vector3 Velocity { get { return velocity; } }
         public Vector3 AngularVelocity { get { return angularVelocity; } }
         public InteractionSourceHandedness Handedness { get { return handedness; } }
         public uint Index { get { return index; } }
@@ -93,6 +94,7 @@
         private ButtonState currentButtonState;
         private ButtonState prevButtonState;
 
+        private Vector3 velocity;
         private Vector3 angularVelocity;
         private float thumbstickAxisFidelity = 0.25f;
 
@@ -390,6 +392,7 @@
 
         protected virtual void UpdatePose(InteractionSourceState state)
         {
+            UpdateVelocity(state.sourcePose);
             UpdateAngularVelocity(state.sourcePose);
             UpdateControllerPose(state.sourcePose);
         }
@@ -495,6 +498,15 @@
                 currentButtonState.ThumbstickPosition = state.thumbstickPosition;
                 prevButtonState.ThumbstickTouched = currentButtonState.ThumbstickTouched;
                 currentButtonState.ThumbstickTouched = CheckThumbstickTouch();
+            }
+        }
+
+        protected virtual void UpdateVelocity(InteractionSourcePose pose)
+        {
+            Vector3 newVelocity;
+            if (pose.TryGetVelocity(out newVelocity))
+            {
+                velocity = newVelocity;
             }
         }
 
