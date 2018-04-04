@@ -325,7 +325,12 @@ namespace VRTK
         /// <returns>A GameObject containing the object that has a render model for the controller.</returns>
         public override GameObject GetControllerRenderModel(VRTK_ControllerReference controllerReference)
         {
+#if VRTK_DEFINE_WINDOWSMR_CONTROLLER_VISUALIZATION
+            UnityGLTF.GLTFComponent renderModel = controllerReference.actual.GetComponentInChildren<UnityGLTF.GLTFComponent>();
+            return (renderModel != null ? renderModel.gameObject : null);
+#else
             return null;
+#endif
         }
 
         /// <summary>
@@ -498,7 +503,7 @@ namespace VRTK
             return true;
         }
 
-        #endregion
+#endregion
 
         protected virtual WindowsMR_TrackedObject GetTrackedObject(GameObject controller)
         {
@@ -619,5 +624,5 @@ namespace VRTK
         }
 #endif
 #endif
-    }
+        }
 }
