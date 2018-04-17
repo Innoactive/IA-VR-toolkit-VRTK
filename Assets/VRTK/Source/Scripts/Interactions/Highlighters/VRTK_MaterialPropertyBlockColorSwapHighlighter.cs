@@ -77,6 +77,14 @@ namespace VRTK.Highlighters
         {
             originalMaterialPropertyBlocks.Clear();
             highlightMaterialPropertyBlocks.Clear();
+            Debug.Log("ObjectToAffect " + objectToAffect);
+
+            if(objectToAffect == null)
+            {
+                Initialise();
+                Debug.Log("Init");
+            }
+
             Renderer[] renderers = objectToAffect.GetComponentsInChildren<Renderer>(true);
             for (int i = 0; i < renderers.Length; i++)
             {
