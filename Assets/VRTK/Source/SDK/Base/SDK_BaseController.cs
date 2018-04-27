@@ -239,7 +239,11 @@ namespace VRTK
             /// <summary>
             /// The Windows Mixed Reality Motion Controller for SteamVR.
             /// </summary>
-            SteamVR_WindowsMRController
+            SteamVR_WindowsMRController,
+            /// <summary>
+            /// The Microsoft Hololens hands for MRTK
+            /// </summary>
+            Hololens_Hand
         }
 
         public event VRTKSDKBaseControllerEventHandler LeftControllerReady;
