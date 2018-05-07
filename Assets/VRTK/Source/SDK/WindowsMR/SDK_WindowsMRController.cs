@@ -8,6 +8,7 @@ namespace VRTK
 #endif
 #if VRTK_DEFINE_WINDOWSMR_CONTROLLER_VISUALIZATION
     using VRTK.WindowsMixedReality;
+    using HoloToolkit.Unity.InputModule;
 #endif
 
     /// <summary>
