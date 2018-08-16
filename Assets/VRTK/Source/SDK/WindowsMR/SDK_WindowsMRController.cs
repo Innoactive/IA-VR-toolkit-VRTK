@@ -7,10 +7,8 @@ namespace VRTK
     using UnityEngine.XR.WSA.Input;
 #endif
 #if VRTK_DEFINE_WINDOWSMR_CONTROLLER_VISUALIZATION
-    using VRTK.WindowsMixedReality;
-    using HoloToolkit.Unity.InputModule;
-    using MotionControllerInfo = VRTK.WindowsMixedReality.MotionControllerInfo;
-    using MotionControllerVisualizer = VRTK.WindowsMixedReality.MotionControllerVisualizer;
+    using MotionControllerInfo = WindowsMixedReality.MotionControllerInfo;
+    using MotionControllerVisualizer =  WindowsMixedReality.MotionControllerVisualizer;
 #endif
 
     /// <summary>

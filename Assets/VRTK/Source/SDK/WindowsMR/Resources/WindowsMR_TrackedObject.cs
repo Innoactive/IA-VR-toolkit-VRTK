@@ -4,13 +4,11 @@
     using UnityEngine;
 #if VRTK_DEFINE_SDK_WINDOWSMR
     using UnityEngine.XR.WSA.Input;
-    using VRTK.WindowsMixedReality.Utilities;
+    using WindowsMixedReality.Utilities;
 #endif
 #if VRTK_DEFINE_WINDOWSMR_CONTROLLER_VISUALIZATION
-    using VRTK.WindowsMixedReality;
-    using HoloToolkit.Unity.InputModule;
-    using MotionControllerInfo = VRTK.WindowsMixedReality.MotionControllerInfo;
-    using MotionControllerVisualizer = VRTK.WindowsMixedReality.MotionControllerVisualizer;
+    using MotionControllerInfo = WindowsMixedReality.MotionControllerInfo;
+    using MotionControllerVisualizer = WindowsMixedReality.MotionControllerVisualizer;
 #endif
 
     public class WindowsMR_TrackedObject : MonoBehaviour
