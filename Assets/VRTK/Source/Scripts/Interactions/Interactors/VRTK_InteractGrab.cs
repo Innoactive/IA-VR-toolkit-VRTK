@@ -176,6 +176,16 @@ namespace VRTK
             return grabbedObject;
         }
 
+        /// <summary>
+        /// The ForceControllerAttachPoint method updates the rigidbody being used as the controller grab attach position.
+        /// </summary>
+        /// <param name="forcedAttachPoint">The rigidbody to use as the controller attach point.</param>
+        public virtual void ForceControllerAttachPoint(Rigidbody forcedAttachPoint)
+        {
+            originalControllerAttachPoint = forcedAttachPoint;
+            controllerAttachPoint = forcedAttachPoint;
+        }
+
         protected virtual void Awake()
         {
             originalControllerAttachPoint = controllerAttachPoint;
@@ -186,7 +196,7 @@ namespace VRTK
                 VRTK_Logger.Error(VRTK_Logger.GetCommonMessage(VRTK_Logger.CommonMessageKeys.REQUIRED_COMPONENT_MISSING_NOT_INJECTED, "VRTK_InteractGrab", "VRTK_InteractTouch", "interactTouch", "the same or parent"));
             }
 
-            VRTK_SDKManager.instance.AddBehaviourToToggleOnLoadedSetupChange(this);
+            VRTK_SDKManager.AttemptAddBehaviourToToggleOnLoadedSetupChange(this);
         }
 
         protected virtual void OnEnable()
@@ -217,7 +227,7 @@ namespace VRTK
 
         protected virtual void OnDestroy()
         {
-            VRTK_SDKManager.instance.RemoveBehaviourToToggleOnLoadedSetupChange(this);
+            VRTK_SDKManager.AttemptRemoveBehaviourToToggleOnLoadedSetupChange(this);
         }
 
         protected virtual void Update()

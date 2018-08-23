@@ -13,28 +13,13 @@
 | UnityEngine.VR | _Core Unity3d library_ |
 | VR Simulator | _Included_ |
 | SteamVR | [SteamVR Plugin] |
-| Oculus | [Oculus Utilities] |
-| *Ximmerse | [Ximmerse Unity SDK] |
-| *Daydream | [Google VR SDK for Unity]
-| *HyperealVR | [Hypereal VR Unity Plugin]
+| Oculus | [Oculus Integration] |
+| Windows Mixed Reality | [Windows Mixed Reality For Unity] |
+| * Ximmerse | [Ximmerse Unity SDK] |
+| * Daydream | [Google VR SDK for Unity]
+| * HyperealVR | [Hypereal VR Unity Plugin]
 
-_*experimental_
-
-## Thank You
-
-A big thank you to all those who support VRTK via [Patreon]. A list of supports can be seen in [THANK_YOU_CREDITS.md].
-
-[![patreon_logo](https://user-images.githubusercontent.com/1029673/28471651-be40a2ea-6e35-11e7-9b01-e1b4a7d533b3.png)](https://www.patreon.com/vrtk)
-
-### Sponsors
-
-An extra special thank you to our sponsors via [Patreon].
-
-[![image](https://user-images.githubusercontent.com/1029673/27898738-28f0e226-621f-11e7-9fdb-8618d85ba372.png)](https://www.realestate.com.au) [![image](https://user-images.githubusercontent.com/1029673/29113652-8fa11ca4-7ce9-11e7-9e33-88308af369b9.png)](http://alvios.com/)
-
-### Awards
-
-![image](https://user-images.githubusercontent.com/1029673/31736514-e813fa84-b43c-11e7-8444-f8159d2f0085.png)
+_* unsupported/experimental_
 
 ## Documentation
 
@@ -127,12 +112,13 @@ Code released under the [MIT License].
 
 Any Third Party Licenses can be viewed in [THIRD_PARTY_NOTICES.md].
 
-[SteamVR Plugin]: https://www.assetstore.unity3d.com/en/#!/content/32647
+[SteamVR Plugin]: https://assetstore.unity.com/packages/templates/systems/steamvr-plugin-32647
 [SteamVR Plugin for Unity3d Github Repo]: https://github.com/ValveSoftware/openvr/tree/master/unity_package/Assets/SteamVR
-[Oculus Utilities]: https://developer.oculus.com/downloads/package/oculus-utilities-for-unity-5/
+[Oculus Integration]: https://assetstore.unity.com/packages/tools/integration/oculus-integration-82022
 [Ximmerse Unity SDK]: https://github.com/Ximmerse/SDK/tree/master/Unity
 [Google VR SDK for Unity]: https://developers.google.com/vr/unity/download
 [Hypereal VR Unity Plugin]: https://www.hypereal.com/#/developer/resource/download
+[Windows Mixed Reality For Unity]: https://developer.microsoft.com/en-us/windows/mixed-reality/install_the_tools
 
 [MIT License]: LICENSE.md
 [THIRD_PARTY_NOTICES.md]: THIRD_PARTY_NOTICES.md
@@ -147,4 +133,3 @@ Any Third Party Licenses can be viewed in [THIRD_PARTY_NOTICES.md].
 
 [Fork]: http://help.github.com/fork-a-repo/
 [Open a Pull Request]: https://help.github.com/articles/using-pull-requests/
-[Patreon]: https://www.patreon.com/vrtk

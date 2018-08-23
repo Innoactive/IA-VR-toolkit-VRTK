@@ -82,6 +82,8 @@ namespace VRTK
         [Tooltip("The Interactable Object to snap into the dropzone when the drop zone is enabled. The Interactable Object must be valid in any given policy list to snap.")]
         public VRTK_InteractableObject defaultSnappedInteractableObject;
 
+        [Header("Obsolete Settings")]
+
         [System.Obsolete("`VRTK_SnapDropZone.defaultSnappedObject` has been replaced with the `VRTK_SnapDropZone.defaultSnappedInteractableObject`. This parameter will be removed in a future version of VRTK.")]
         [ObsoleteInspector]
         public GameObject defaultSnappedObject;
@@ -123,6 +125,8 @@ namespace VRTK
         protected Coroutine attemptTransitionAtEndOfFrameRoutine;
         protected Coroutine checkCanSnapRoutine;
         protected bool originalJointCollisionState = false;
+
+        protected Coroutine overridePreviousStateAtEndOfFrameRoutine;
 
         protected const string HIGHLIGHT_CONTAINER_NAME = "HighlightContainer";
         protected const string HIGHLIGHT_OBJECT_NAME = "HighlightObject";
@@ -314,6 +318,63 @@ namespace VRTK
             return currentSnappedObject;
         }
 
+        /// <summary>
+        /// The Clone method returns the GameObject of the cloned snap drop zone
+        /// </summary>
+        /// <param name="position">Position of the cloned GameObject</param>
+        /// <returns>The GameObject of the clone</returns>
+        public virtual GameObject Clone(Vector3 position)
+        {
+            VRTK_SnapDropZone cloneSDZ = Instantiate(gameObject, position, transform.rotation).GetComponent<VRTK_SnapDropZone>();
+
+            for (int childID = 0; childID < cloneSDZ.transform.childCount; childID++)
+            {
+                Transform child = cloneSDZ.transform.GetChild(childID);
+                if (child.GetComponent<VRTK_InteractableObject>() != null)
+                {
+                    Destroy(child.gameObject);
+                }
+            }
+
+            if (isSnapped)
+            {
+                VRTK_InteractableObject currObject = currentSnappedObject;
+
+                //Get copy of Objects original state
+                Transform previousParent;
+                bool previousKinematic;
+                bool previousGrabbable;
+                currObject.GetPreviousState(out previousParent, out previousKinematic, out previousGrabbable);
+
+                GameObject clonedObject = null;
+                if (cloneNewOnUnsnap)
+                {
+                    clonedObject = Instantiate(objectToClone);
+                    clonedObject.SetActive(true);
+                }
+                else
+                {
+                    clonedObject = Instantiate(currObject.gameObject);
+                }
+
+                clonedObject.transform.position = cloneSDZ.transform.position;
+                cloneSDZ.ForceSnap(clonedObject);
+
+                overridePreviousStateAtEndOfFrameRoutine = StartCoroutine(OverridePreviousStateAtEndOfFrame(clonedObject.GetComponent<VRTK_InteractableObject>(), previousParent, previousKinematic, previousGrabbable));
+            }
+
+            return cloneSDZ.gameObject;
+        }
+
+        /// <summary>
+        /// The Clone method returns the GameObject of the cloned snap drop zone
+        /// </summary>
+        /// <returns>The GameObject of the clone</returns>
+        public virtual GameObject Clone()
+        {
+            return Clone(Vector3.zero);
+        }
+
         protected virtual void Awake()
         {
             if (Application.isPlaying)
@@ -370,6 +431,11 @@ namespace VRTK
             if (checkCanSnapRoutine != null)
             {
                 StopCoroutine(checkCanSnapRoutine);
+            }
+
+            if(overridePreviousStateAtEndOfFrameRoutine != null)
+            {
+                StopCoroutine(overridePreviousStateAtEndOfFrameRoutine);
             }
 
             ForceUnsnap();
@@ -783,10 +849,13 @@ namespace VRTK
                 yield return null;
             }
 
-            //Force all to the last setting in case anything has moved during the transition
-            ioTransform.position = endSettings.transform.position;
-            ioTransform.rotation = endSettings.transform.rotation;
-            ioTransform.localScale = endScale;
+            if (ioTransform != null && endSettings != null)
+            {
+                //Force all to the last setting in case anything has moved during the transition
+                ioTransform.position = endSettings.transform.position;
+                ioTransform.rotation = endSettings.transform.rotation;
+                ioTransform.localScale = endScale;
+            }
 
             ioCheck.isKinematic = storedKinematicState;
             SetDropSnapType(ioCheck);
@@ -1115,6 +1184,12 @@ namespace VRTK
                 Gizmos.color = Color.red;
                 Gizmos.DrawWireCube(highlightObject.transform.position, boxSize);
             }
+        }
+
+        protected virtual IEnumerator OverridePreviousStateAtEndOfFrame(VRTK_InteractableObject io, Transform parent, bool kinematic, bool grabbable)
+        {
+            yield return new WaitForEndOfFrame();
+            io.OverridePreviousState(parent, kinematic, grabbable);
         }
     }
 }

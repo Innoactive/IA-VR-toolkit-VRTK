@@ -66,6 +66,7 @@ namespace VRTK
                 PopulateObjectReferences(false);
             }
         }
+
         /// <summary>
         /// The info of the SDK to use to utilize room scale boundaries. By setting this to `null` the fallback SDK will be used.
         /// </summary>
@@ -94,6 +95,7 @@ namespace VRTK
                 PopulateObjectReferences(false);
             }
         }
+
         /// <summary>
         /// The info of the SDK to use to utilize the VR headset. By setting this to `null` the fallback SDK will be used.
         /// </summary>
@@ -122,6 +124,7 @@ namespace VRTK
                 PopulateObjectReferences(false);
             }
         }
+
         /// <summary>
         /// The info of the SDK to use to utilize the input devices. By setting this to `null` the fallback SDK will be used.
         /// </summary>
@@ -168,6 +171,7 @@ namespace VRTK
                 return cachedSystemSDK;
             }
         }
+
         /// <summary>
         /// The selected boundaries SDK.
         /// </summary>
@@ -185,6 +189,7 @@ namespace VRTK
                 return cachedBoundariesSDK;
             }
         }
+
         /// <summary>
         /// The selected headset SDK.
         /// </summary>
@@ -202,6 +207,7 @@ namespace VRTK
                 return cachedHeadsetSDK;
             }
         }
+
         /// <summary>
         /// The selected controller SDK.
         /// </summary>
@@ -260,7 +266,7 @@ namespace VRTK
         private SDK_BaseController cachedControllerSDK;
 
         /// <summary>
-        /// Populates the object references by using the currently set SDKs.
+        /// The PopulateObjectReferences method populates the object references by using the currently set SDKs.
         /// </summary>
         /// <param name="force">Whether to ignore `autoPopulateObjectReferences` while deciding to populate.</param>
         public void PopulateObjectReferences(bool force)
@@ -271,7 +277,7 @@ namespace VRTK
             }
 
 #if UNITY_EDITOR
-            if (!EditorApplication.isPlaying)
+            if (!EditorApplication.isPlaying && VRTK_SDKManager.ValidInstance())
             {
                 VRTK_SDKManager.instance.SetLoadedSDKSetupToPopulateObjectReferences(this);
             }
@@ -301,7 +307,7 @@ namespace VRTK
         }
 
         /// <summary>
-        /// Checks the setup for errors and creates an array of error descriptions.
+        /// The GetSimplifiedErrorDescriptions method checks the setup for errors and creates an array of error descriptions.
         /// </summary>
         /// <remarks>
         /// The returned error descriptions handle the following cases for the current SDK infos:
@@ -331,7 +337,7 @@ namespace VRTK
                 ReadOnlyCollection<VRTK_SDKInfo> installedSDKInfos = installedSDKInfosList[index];
                 VRTK_SDKInfo currentSDKInfo = currentSDKInfos[index];
 
-                Type baseType = currentSDKInfo.type.BaseType;
+                Type baseType = VRTK_SharedMethods.GetBaseType(currentSDKInfo.type);
                 if (baseType == null)
                 {
                     continue;
@@ -359,6 +365,10 @@ namespace VRTK
             return sdkErrorDescriptions.Distinct().ToArray();
         }
 
+        /// <summary>
+        /// The OnLoaded method determines when an SDK Setup has been loaded.
+        /// </summary>
+        /// <param name="sender">The SDK Manager that has loaded the SDK Setup.</param>
         public void OnLoaded(VRTK_SDKManager sender)
         {
             List<SDK_Base> sdkBases = new SDK_Base[] { systemSDK, boundariesSDK, headsetSDK, controllerSDK }.ToList();
@@ -379,6 +389,10 @@ namespace VRTK
             }
         }
 
+        /// <summary>
+        /// The OnUnloaded method determines when an SDK Setup has been unloaded.
+        /// </summary>
+        /// <param name="sender">The SDK Manager that has unloaded the SDK Setup.</param>
         public void OnUnloaded(VRTK_SDKManager sender)
         {
             List<SDK_Base> sdkBases = new SDK_Base[] { systemSDK, boundariesSDK, headsetSDK, controllerSDK }.ToList();
@@ -398,7 +412,7 @@ namespace VRTK
         private void OnEnable()
         {
 #pragma warning disable 618
-            if (!VRTK_SDKManager.instance.persistOnLoad)
+            if (VRTK_SDKManager.ValidInstance() && !VRTK_SDKManager.instance.persistOnLoad)
 #pragma warning restore 618
             {
                 PopulateObjectReferences(false);
@@ -409,7 +423,11 @@ namespace VRTK
         static VRTK_SDKSetup()
         {
             //call AutoPopulateObjectReferences when the currently active scene changes
+#if UNITY_2018_1_OR_NEWER
+            EditorApplication.hierarchyChanged += AutoPopulateObjectReferences;
+#else
             EditorApplication.hierarchyWindowChanged += AutoPopulateObjectReferences;
+#endif
         }
 
         [DidReloadScripts(2)]
@@ -420,7 +438,7 @@ namespace VRTK
                 return;
             }
 
-            foreach (VRTK_SDKSetup setup in VRTK_SharedMethods.FindEvenInactiveComponents<VRTK_SDKSetup>())
+            foreach (VRTK_SDKSetup setup in VRTK_SharedMethods.FindEvenInactiveComponents<VRTK_SDKSetup>(true))
             {
                 setup.PopulateObjectReferences(false);
             }
@@ -473,13 +491,13 @@ namespace VRTK
                 return string.Format("The fallback {0} SDK is being used because there is no other {0} SDK set in the SDK Setup.", prettyName);
             }
 
-            if (!baseType.IsAssignableFrom(selectedType) || fallbackType.IsAssignableFrom(selectedType))
+            if (!VRTK_SharedMethods.IsTypeAssignableFrom(baseType, selectedType) || VRTK_SharedMethods.IsTypeAssignableFrom(fallbackType, selectedType))
             {
                 string description = string.Format("The fallback {0} SDK is being used despite being set to '{1}'.", prettyName, selectedType.Name);
 
                 if (installedInfos.Select(installedInfo => installedInfo.type).Contains(selectedType))
                 {
-                    return description + " Its needed scripting define symbols are not added. You can click the GameObject with the `VRTK_SDKManager` script attached to it in Edit Mode and choose to automatically let the manager handle the scripting define symbols.";
+                    return description + " Its needed scripting define symbols are not added. You can click the GameObject with the `VRTK_SDKManager` script attached to it in Edit Mode and choose to automatically let the manager handle the scripting define symbols." + VRTK_Logger.GetCommonMessage(VRTK_Logger.CommonMessageKeys.SCRIPTING_DEFINE_SYMBOLS_NOT_FOUND);
                 }
 
                 return description + " The needed vendor SDK isn't installed.";
@@ -519,7 +537,7 @@ namespace VRTK
                 scriptAliasTransform.localRotation = Quaternion.identity;
             };
 
-            if (actualLeftController != null)
+            if (actualLeftController != null && VRTK_SDKManager.ValidInstance())
             {
                 setParent(VRTK_SDKManager.instance.scriptAliasLeftController, actualLeftController);
 
@@ -529,7 +547,7 @@ namespace VRTK
                 }
             }
 
-            if (actualRightController != null)
+            if (actualRightController != null && VRTK_SDKManager.ValidInstance())
             {
                 setParent(VRTK_SDKManager.instance.scriptAliasRightController, actualRightController);
 
