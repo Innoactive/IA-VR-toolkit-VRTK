@@ -96,6 +96,19 @@ namespace VRTK.Controllables.ArtificialBased
         }
 
         /// <summary>
+        /// The SetValue method sets the current position value of the slider
+        /// </summary>
+        /// <param name="value">The new position value</param>
+        public override void SetValue(float value)
+        {
+            Vector3 tempPos = new Vector3();
+            tempPos = transform.localPosition;
+            tempPos[(int)operateAxis] = value;
+
+            transform.localPosition = tempPos;
+        }
+
+        /// <summary>
         /// The GetStepValue method returns the current position of the slider based on the step value range.
         /// </summary>
         /// <param name="currentValue">The current position value of the slider to get the Step Value for.</param>
@@ -165,6 +178,43 @@ namespace VRTK.Controllables.ArtificialBased
             return controlInteractableObject;
         }
 
+        protected override void OnDrawGizmosSelected()
+        {
+            Vector3 initialPoint = transform.position;
+            base.OnDrawGizmosSelected();
+            Vector3 destinationPoint = initialPoint + (AxisDirection(true) * maximumLength);
+            Gizmos.DrawLine(initialPoint, destinationPoint);
+            Gizmos.DrawSphere(initialPoint, 0.01f);
+            Gizmos.DrawSphere(destinationPoint, 0.01f);
+        }
+
+        protected override void OnEnable()
+        {
+            base.OnEnable();
+
+            SetValue(storedValue);
+
+            previousLocalPosition = Vector3.one * float.MaxValue;
+            stillResting = false;
+            SetupInteractableObject();
+            setPositionTargetAtEndOfFrameRoutine = StartCoroutine(SetPositionTargetAtEndOfFrameRoutine());
+        }
+
+        protected override void OnDisable()
+        {
+            base.OnDisable();
+            ManageInteractableListeners(false);
+            if (createInteractableObject)
+            {
+                Destroy(controlInteractableObject);
+            }
+            if (setPositionTargetAtEndOfFrameRoutine != null)
+            {
+                StopCoroutine(setPositionTargetAtEndOfFrameRoutine);
+            }
+            transform.localPosition = Vector3.zero;
+        }
+
         protected override void EmitEvents()
         {
             bool valueChanged = !VRTK_SharedMethods.Vector3ShallowCompare(transform.localPosition, previousLocalPosition, equalityFidelity);
@@ -212,39 +262,6 @@ namespace VRTK.Controllables.ArtificialBased
             }
 
             previousLocalPosition = transform.localPosition;
-        }
-
-        protected override void OnEnable()
-        {
-            base.OnEnable();
-            previousLocalPosition = Vector3.one * float.MaxValue;
-            stillResting = false;
-            SetupInteractableObject();
-            setPositionTargetAtEndOfFrameRoutine = StartCoroutine(SetPositionTargetAtEndOfFrameRoutine());
-        }
-
-        protected override void OnDisable()
-        {
-            base.OnDisable();
-            ManageInteractableListeners(false);
-            if (createInteractableObject)
-            {
-                Destroy(controlInteractableObject);
-            }
-            if (setPositionTargetAtEndOfFrameRoutine != null)
-            {
-                StopCoroutine(setPositionTargetAtEndOfFrameRoutine);
-            }
-        }
-
-        protected override void OnDrawGizmosSelected()
-        {
-            Vector3 initialPoint = transform.position;
-            base.OnDrawGizmosSelected();
-            Vector3 destinationPoint = initialPoint + (AxisDirection(true) * maximumLength);
-            Gizmos.DrawLine(initialPoint, destinationPoint);
-            Gizmos.DrawSphere(initialPoint, 0.01f);
-            Gizmos.DrawSphere(destinationPoint, 0.01f);
         }
 
         protected override ControllableEventArgs EventPayload()

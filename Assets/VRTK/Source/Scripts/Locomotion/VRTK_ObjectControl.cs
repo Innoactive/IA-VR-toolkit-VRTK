@@ -127,7 +127,7 @@ namespace VRTK
 
         protected virtual void Awake()
         {
-            VRTK_SDKManager.instance.AddBehaviourToToggleOnLoadedSetupChange(this);
+            VRTK_SDKManager.AttemptAddBehaviourToToggleOnLoadedSetupChange(this);
         }
 
         protected virtual void OnEnable()
@@ -155,7 +155,7 @@ namespace VRTK
 
         protected virtual void OnDestroy()
         {
-            VRTK_SDKManager.instance.RemoveBehaviourToToggleOnLoadedSetupChange(this);
+            VRTK_SDKManager.AttemptRemoveBehaviourToToggleOnLoadedSetupChange(this);
         }
 
         protected virtual void Update()
@@ -189,9 +189,14 @@ namespace VRTK
 
         protected virtual void SetControlledObject()
         {
+            Transform playArea = VRTK_DeviceFinder.PlayAreaTransform();
+
             setControlOverrideObject = controlOverrideObject;
-            controlledGameObject = (controlOverrideObject ? controlOverrideObject : VRTK_DeviceFinder.PlayAreaTransform().gameObject);
-            controlledGameObjectPreviousY = controlledGameObject.transform.position.y;
+            controlledGameObject = (controlOverrideObject ? controlOverrideObject : (playArea != null ? playArea.gameObject : null));
+            if (controlledGameObject != null)
+            {
+                controlledGameObjectPreviousY = controlledGameObject.transform.position.y;
+            }
         }
 
         protected virtual void CheckFalling()

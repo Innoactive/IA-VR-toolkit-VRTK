@@ -153,7 +153,9 @@ namespace VRTK
         /// </summary>
         public virtual void ResetPointerObjects()
         {
+            DestroyPointerOriginTransformFollow();
             DestroyPointerObjects();
+            CreatePointerOriginTransformFollow();
             CreatePointerObjects();
         }
 
@@ -274,7 +276,7 @@ namespace VRTK
 
         protected virtual void Awake()
         {
-            VRTK_SDKManager.instance.AddBehaviourToToggleOnLoadedSetupChange(this);
+            VRTK_SDKManager.AttemptAddBehaviourToToggleOnLoadedSetupChange(this);
         }
 
         protected virtual void OnEnable()
@@ -295,12 +297,12 @@ namespace VRTK
                 Destroy(objectInteractor);
             }
             controllerGrabScript = null;
-            Destroy(pointerOriginTransformFollowGameObject);
+            DestroyPointerOriginTransformFollow();
         }
 
         protected virtual void OnDestroy()
         {
-            VRTK_SDKManager.instance.RemoveBehaviourToToggleOnLoadedSetupChange(this);
+            VRTK_SDKManager.AttemptRemoveBehaviourToToggleOnLoadedSetupChange(this);
         }
 
         protected virtual void OnValidate()
@@ -316,7 +318,10 @@ namespace VRTK
                 UpdateObjectInteractor();
             }
 
-            UpdatePointerOriginTransformFollow();
+            if (pointerOriginTransformFollow != null)
+            {
+                UpdatePointerOriginTransformFollow();
+            }
         }
 
         protected virtual void ToggleObjectInteraction(bool state)
@@ -336,8 +341,12 @@ namespace VRTK
                     {
                         controllerGrabScript.ForceRelease(true);
                     }
-                    controllerGrabScript.controllerAttachPoint = savedAttachPoint;
-                    savedAttachPoint = null;
+
+                    if (savedAttachPoint != null)
+                    {
+                        controllerGrabScript.controllerAttachPoint = savedAttachPoint;
+                        savedAttachPoint = null;
+                    }
                     attachedToInteractorAttachPoint = false;
                     savedBeamLength = 0f;
                 }
@@ -456,7 +465,7 @@ namespace VRTK
 
         protected virtual void MakeRenderersVisible()
         {
-            foreach (GameObject currentRenderer in makeRendererVisible)
+            foreach (GameObject currentRenderer in new HashSet<GameObject>(makeRendererVisible))
             {
                 ToggleRendererVisibility(currentRenderer, true);
             }
@@ -608,6 +617,16 @@ namespace VRTK
             pointerOriginTransformFollow.enabled = false;
             pointerOriginTransformFollow.moment = VRTK_TransformFollow.FollowMoment.OnFixedUpdate;
             pointerOriginTransformFollow.followsScale = false;
+        }
+
+        protected virtual void DestroyPointerOriginTransformFollow()
+        {
+            if (pointerOriginTransformFollowGameObject != null)
+            {
+                Destroy(pointerOriginTransformFollowGameObject);
+                pointerOriginTransformFollowGameObject = null;
+                pointerOriginTransformFollow = null;
+            }
         }
 
         protected virtual float OverrideBeamLength(float currentLength)

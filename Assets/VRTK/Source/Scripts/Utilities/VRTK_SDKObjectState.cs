@@ -83,7 +83,7 @@ namespace VRTK
 
         protected virtual void ToggleOnSDK()
         {
-            if (loadedSDKSetup != null && loadedSDKSetup == sdkManager.loadedSetup)
+            if (loadedSDKSetup != null && loadedSDKSetup == VRTK_SDKManager.GetLoadedSDKSetup())
             {
                 ToggleObject();
             }
@@ -115,7 +115,7 @@ namespace VRTK
             {
                 ToggleGameObject();
             }
-            else if (target.GetType().IsSubclassOf(typeof(Component)))
+            else if (VRTK_SharedMethods.IsTypeSubclassOf(target.GetType(), typeof(Component)))
             {
                 ToggleComponent();
             }

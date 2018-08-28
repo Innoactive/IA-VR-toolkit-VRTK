@@ -149,7 +149,7 @@ namespace VRTK
 
         protected virtual void Awake()
         {
-            VRTK_SDKManager.instance.AddBehaviourToToggleOnLoadedSetupChange(this);
+            VRTK_SDKManager.AttemptAddBehaviourToToggleOnLoadedSetupChange(this);
         }
 
         protected virtual void OnEnable()
@@ -164,6 +164,7 @@ namespace VRTK
             rotationActivated = false;
             scaleActivated = false;
             ManageActivationListeners(true);
+            SetControllerReferences();
         }
 
         protected virtual void OnDisable()
@@ -173,7 +174,7 @@ namespace VRTK
 
         protected virtual void OnDestroy()
         {
-            VRTK_SDKManager.instance.RemoveBehaviourToToggleOnLoadedSetupChange(this);
+            VRTK_SDKManager.AttemptRemoveBehaviourToToggleOnLoadedSetupChange(this);
         }
 
 
@@ -244,6 +245,11 @@ namespace VRTK
         }
 
         protected virtual void ControllerModelAvailable(object sender, ControllerInteractionEventArgs e)
+        {
+            SetControllerReferences();
+        }
+
+        protected virtual void SetControllerReferences()
         {
             leftControllerReference = VRTK_DeviceFinder.GetControllerReferenceLeftHand();
             rightControllerReference = VRTK_DeviceFinder.GetControllerReferenceRightHand();
@@ -386,7 +392,7 @@ namespace VRTK
             if (rotationTrackingController == TrackingController.BothControllers && VRTK_ControllerReference.IsValid(leftControllerReference) && VRTK_ControllerReference.IsValid(rightControllerReference))
             {
                 Vector2 currentRotationAngle = GetControllerRotation();
-                float newAngle = Vector2.Angle(currentRotationAngle, previousRotationAngle) * Mathf.Sign(currentRotationAngle.x * currentRotationAngle.y - previousRotationAngle.x * previousRotationAngle.y);
+                float newAngle = Vector2.Angle(currentRotationAngle, previousRotationAngle)*Mathf.Sign(Vector3.Cross(currentRotationAngle, previousRotationAngle).z);
                 RotateByAngle(newAngle);
                 previousRotationAngle = currentRotationAngle;
             }
