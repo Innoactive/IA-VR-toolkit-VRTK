@@ -4,13 +4,11 @@
     using UnityEngine;
 #if VRTK_DEFINE_SDK_WINDOWSMR
     using UnityEngine.XR.WSA.Input;
-    using VRTK.WindowsMixedReality.Utilities;
+    using WindowsMixedReality.Utilities;
 #endif
 #if VRTK_DEFINE_WINDOWSMR_CONTROLLER_VISUALIZATION
-    using VRTK.WindowsMixedReality;
-    using HoloToolkit.Unity.InputModule;
-    using MotionControllerInfo = VRTK.WindowsMixedReality.MotionControllerInfo;
-    using MotionControllerVisualizer = VRTK.WindowsMixedReality.MotionControllerVisualizer;
+    using MotionControllerInfo = WindowsMixedReality.MotionControllerInfo;
+    using MotionControllerVisualizer = WindowsMixedReality.MotionControllerVisualizer;
 #endif
 
     public class WindowsMR_TrackedObject : MonoBehaviour
@@ -105,6 +103,8 @@
         private float hairTriggerLimit;
         private bool hairTriggerState;
         private bool hairTriggerPrevState;
+
+        private Vector3 pointerForward;
 
         public float GetPressAmount(InteractionSourcePressType button)
         {
@@ -218,6 +218,11 @@
                     return currentButtonState.ThumbstickPosition;
             }
             return Vector2.zero;
+        }
+
+        public Vector3 GetPointerForward()
+        {
+            return pointerForward;
         }
 
         public bool GetHairTrigger()
@@ -480,7 +485,21 @@
             {
                 transform.localPosition = newPosition;
             }
+
+            Vector3 newPointerPos;
+            Vector3 newForward;
+            if (pose.TryGetPosition(out newPointerPos, InteractionSourceNode.Pointer))
+            {
+                
+            }
+
+            if (pose.TryGetForward(out newForward, InteractionSourceNode.Pointer))
+            {
+                pointerForward = newForward;
+            }
         }
+
+        private GameObject dummyObj;
 
         protected virtual void UpdateAxis(InteractionSourceState state)
         {
