@@ -505,6 +505,8 @@ namespace VRTK
                     return SDK_BaseHeadset.HeadsetType.OculusRiftDK2;
                 case "windowsmixedreality":
                     return SDK_BaseHeadset.HeadsetType.WindowsMixedReality;
+                case "magicleap":
+                    return SDK_BaseHeadset.HeadsetType.MagicLeap;
             }
             return SDK_BaseHeadset.HeadsetType.Undefined;
         }

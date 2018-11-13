@@ -66,7 +66,12 @@ namespace VRTK
             /// <summary>
             /// The Windows Mixed Reality headset.
             /// </summary>
-            WindowsMixedReality
+            WindowsMixedReality,
+            /// <summary>
+            /// The Windows Mixed Reality headset.
+            /// </summary>
+            MagicLeap
+
         }
         protected Transform cachedHeadset;
         protected Transform cachedHeadsetCamera;
@@ -179,6 +184,9 @@ namespace VRTK
                     return CleanPropertyString("oculusriftdk2");
                 case "acermixedreality":
                     return CleanPropertyString("windowsmixedreality");
+                case "magicleap1":
+                case "magicleap":
+                    return CleanPropertyString("magicleap");
             }
             return "";
         }

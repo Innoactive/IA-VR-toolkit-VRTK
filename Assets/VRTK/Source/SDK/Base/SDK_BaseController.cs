@@ -239,7 +239,11 @@ namespace VRTK
             /// <summary>
             /// The Windows Mixed Reality Motion Controller for SteamVR.
             /// </summary>
-            SteamVR_WindowsMRController
+            SteamVR_WindowsMRController,
+            /// <summary>
+            /// The Magic Leap Controller for Lumin.
+            /// </summary>
+            MagicLeap_Controller
         }
 
         public event VRTKSDKBaseControllerEventHandler LeftControllerReady;
