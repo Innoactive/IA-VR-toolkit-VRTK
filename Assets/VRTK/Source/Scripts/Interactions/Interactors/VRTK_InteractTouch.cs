@@ -534,7 +534,9 @@ namespace VRTK
             touchRigidBody.isKinematic = true;
             touchRigidBody.useGravity = false;
             touchRigidBody.constraints = RigidbodyConstraints.FreezeAll;
+#if !UNITY_2018_3_OR_NEWER // Newer unity versions do not support continuous collision detection on kinematic bodies.
             touchRigidBody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+#endif
         }
 
         protected virtual void EmitControllerRigidbodyEvent(bool state)
